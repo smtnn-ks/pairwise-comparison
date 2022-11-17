@@ -1,0 +1,59 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int    @id @default(autoincrement())
+  email        String @unique
+  password     String
+  refreshToken String
+
+  // * User - Interview relation
+  interviews Interview[]
+}
+
+model Interview {
+  id          Int     @id @default(autoincrement())
+  title       String
+  description String
+  isDone      Boolean @default(false)
+
+  // * User - Interview relation
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
+
+  // * Interview - Option relation
+  optoins Option[]
+
+  // * Interview - Expert relation
+  experts Expert[]
+}
+
+model Option {
+  id          Int    @id @default(autoincrement())
+  title       String
+  description String
+  scort       Int    @default(0)
+
+  // * Interview - Option relation
+  interview   Interview @relation(fields: [interviewId], references: [id])
+  interviewId Int
+}
+
+model Expert {
+  id     String  @id
+  name   String
+  isDone Boolean @default(false)
+
+  // * Interview - Option relation
+  interview   Interview @relation(fields: [interviewId], references: [id])
+  interviewId Int
+}
