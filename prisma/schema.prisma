@@ -41,7 +41,7 @@ model Option {
   id          Int    @id @default(autoincrement())
   title       String
   description String
-  scort       Int    @default(0)
+  score       Int    @default(0)
 
   // * Interview - Option relation
   interview   Interview @relation(fields: [interviewId], references: [id])
