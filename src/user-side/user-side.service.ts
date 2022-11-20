@@ -29,7 +29,7 @@ export class UserSideService {
     await this.validateUser(id, userId);
     return await this.prisma.interview.findUnique({
       where: { id },
-      include: { optoins: true, experts: true },
+      include: { options: true, experts: true },
     });
   }
 

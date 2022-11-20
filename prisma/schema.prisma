@@ -31,7 +31,7 @@ model Interview {
   userId Int
 
   // * Interview - Option relation
-  optoins Option[]
+  options Option[]
 
   // * Interview - Expert relation
   experts Expert[]
