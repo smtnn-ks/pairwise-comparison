@@ -1,11 +1,15 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Expert, Option } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { SendResultDto } from './dto/send-result.dto';
 
 @Injectable()
 export class ExpertSideService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private eventEmitter: EventEmitter2,
+  ) {}
 
   async getOptions(expertId: string): Promise<Expert> {
     return await this.prisma.expert.findUnique({
@@ -33,6 +37,8 @@ export class ExpertSideService {
         data: { isDone: true },
       });
     }
+
+    this.eventEmitter.emit('expertPassedTest', expertData.interview.id);
 
     const calls: Promise<Option>[] = [];
 

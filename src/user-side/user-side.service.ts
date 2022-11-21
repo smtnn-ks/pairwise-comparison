@@ -6,6 +6,7 @@ import {
 import { Expert, Interview, Option, Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { generate } from 'shortid';
+import { OnEvent } from '@nestjs/event-emitter';
 
 @Injectable()
 export class UserSideService {
@@ -183,5 +184,20 @@ export class UserSideService {
       where: { interviewId },
       data: { isDone: false },
     });
+  }
+
+  @OnEvent('expertPassedTest')
+  async expertPassedTestCheck(interviewId: number) {
+    const interview = await this.prisma.interview.findUnique({
+      where: { id: interviewId },
+      include: { experts: true },
+    });
+
+    if (interview.experts.every((t: Expert) => t.isDone)) {
+      await this.prisma.interview.update({
+        where: { id: interviewId },
+        data: { isDone: true },
+      });
+    }
   }
 }
