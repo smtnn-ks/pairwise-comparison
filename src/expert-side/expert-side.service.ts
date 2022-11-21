@@ -25,6 +25,8 @@ export class ExpertSideService {
 
     if (expertData.isDone) {
       throw new BadRequestException('This expert has passed interview already');
+    } else if (!expertData.interview.isComplete) {
+      throw new BadRequestException('Interview is not complete');
     } else {
       await this.prisma.expert.update({
         where: { id: expertId },

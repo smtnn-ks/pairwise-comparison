@@ -25,29 +25,30 @@ export class UserSideService {
     return await this.prisma.interview.findMany({ where: { userId } });
   }
 
-  async findOne(id: number, userId: number): Promise<Interview> {
-    await this.validateUser(id, userId);
+  async findOne(interviewId: number, userId: number): Promise<Interview> {
+    await this.validateUser(interviewId, userId);
     return await this.prisma.interview.findUnique({
-      where: { id },
+      where: { id: interviewId },
       include: { options: true, experts: true },
     });
   }
 
   async update(
     interviewDto: Prisma.InterviewUpdateInput,
-    id: number,
+    interviewId: number,
     userId: number,
   ): Promise<Interview> {
-    await this.validateUser(id, userId);
+    await this.validateUser(interviewId, userId);
+    await this.resetInterviewProgress(interviewId);
     return await this.prisma.interview.update({
-      where: { id },
+      where: { id: interviewId },
       data: interviewDto,
     });
   }
 
-  async remove(id: number, userId: number): Promise<Interview> {
-    await this.validateUser(id, userId);
-    return await this.prisma.interview.delete({ where: { id } });
+  async remove(interviewId: number, userId: number): Promise<Interview> {
+    await this.validateUser(interviewId, userId);
+    return await this.prisma.interview.delete({ where: { id: interviewId } });
   }
 
   // * Option
@@ -58,6 +59,8 @@ export class UserSideService {
     userId: number,
   ): Promise<Option> {
     await this.validateUser(interviewId, userId);
+    await this.validateInterviewCompleteness(interviewId);
+    await this.resetInterviewProgress(interviewId);
     const { title, description } = optionDto;
     return await this.prisma.option.create({
       data: { title, description, interviewId },
@@ -66,25 +69,28 @@ export class UserSideService {
 
   async updateOption(
     optionDto: Prisma.OptionUpdateInput,
-    id: number,
+    optionId: number,
     interviewId: number,
     userId: number,
   ): Promise<Option> {
     await this.validateUser(interviewId, userId);
+    await this.resetInterviewProgress(interviewId);
     const { title, description } = optionDto;
     return await this.prisma.option.update({
-      where: { id },
+      where: { id: optionId },
       data: { title, description },
     });
   }
 
   async removeOption(
-    id: number,
+    optionId: number,
     interviewId: number,
     userId: number,
   ): Promise<Option> {
     await this.validateUser(interviewId, userId);
-    return await this.prisma.option.delete({ where: { id } });
+    await this.validateInterviewCompleteness(interviewId);
+    await this.resetInterviewProgress(interviewId);
+    return await this.prisma.option.delete({ where: { id: optionId } });
   }
 
   // * Expert
@@ -95,6 +101,8 @@ export class UserSideService {
     userId: number,
   ): Promise<Expert> {
     await this.validateUser(interviewId, userId);
+    await this.validateInterviewCompleteness(interviewId);
+    await this.resetInterviewProgress(interviewId);
     const { name } = expertDto;
     return await this.prisma.expert.create({
       data: { id: generate(), name, interviewId },
@@ -103,35 +111,77 @@ export class UserSideService {
 
   async updateExpert(
     expertDto: Prisma.ExpertUpdateInput,
-    id: string,
+    expertId: string,
     interviewId: number,
     userId: number,
   ): Promise<Expert> {
     await this.validateUser(interviewId, userId);
+    await this.resetInterviewProgress(interviewId);
     const { name } = expertDto;
-    return await this.prisma.expert.update({ where: { id }, data: { name } });
+    return await this.prisma.expert.update({
+      where: { id: expertId },
+      data: { name },
+    });
   }
 
   async removeExpert(
-    id: string,
+    expertId: string,
     interviewId: number,
     userId: number,
   ): Promise<Expert> {
     await this.validateUser(interviewId, userId);
-    return await this.prisma.expert.delete({ where: { id } });
+    await this.validateInterviewCompleteness(interviewId);
+    await this.resetInterviewProgress(interviewId);
+    return await this.prisma.expert.delete({ where: { id: expertId } });
   }
 
   // * support functions
 
   // TODO: Find a way to perform validation somewhere else
 
-  async validateUser(id: number, userId: number): Promise<Interview> {
-    const interview = await this.prisma.interview.findUnique({ where: { id } });
+  async validateUser(interviewId: number, userId: number): Promise<Interview> {
+    const interview = await this.prisma.interview.findUnique({
+      where: { id: interviewId },
+    });
     if (!interview) throw new NotFoundException();
     if (interview.userId !== userId)
       throw new BadRequestException(
-        `Interview ${id} does not belong to user ${userId}`,
+        `Interview ${interviewId} does not belong to user ${userId}`,
       );
     return interview;
+  }
+
+  async validateInterviewCompleteness(interviewId: number): Promise<void> {
+    const interview = await this.prisma.interview.findUnique({
+      where: { id: interviewId },
+      include: { options: true, experts: true },
+    });
+
+    if (interview.options.length >= 2 && interview.experts.length >= 2) {
+      if (!interview.isComplete) {
+        await this.prisma.interview.update({
+          where: { id: interviewId },
+          data: { isComplete: true },
+        });
+      }
+    } else {
+      if (interview.isComplete) {
+        await this.prisma.interview.update({
+          where: { id: interviewId },
+          data: { isComplete: false },
+        });
+      }
+    }
+  }
+
+  async resetInterviewProgress(interviewId: number): Promise<void> {
+    await this.prisma.option.updateMany({
+      where: { interviewId },
+      data: { score: 0 },
+    });
+    await this.prisma.expert.updateMany({
+      where: { interviewId },
+      data: { isDone: false },
+    });
   }
 }

@@ -25,6 +25,7 @@ model Interview {
   title       String
   description String
   isDone      Boolean @default(false)
+  isComplete  Boolean @default(false)
 
   // * User - Interview relation
   user   User @relation(fields: [userId], references: [id])
