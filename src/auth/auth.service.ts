@@ -9,7 +9,6 @@ import { Tokens } from './types';
 import * as bcrypt from 'bcrypt';
 import { User } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
-import { NotFoundError } from 'rxjs';
 
 @Injectable()
 export class AuthService {

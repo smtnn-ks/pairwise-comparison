@@ -60,7 +60,7 @@ export class UserSideService {
     userId: number,
   ): Promise<Option> {
     await this.validateUser(interviewId, userId);
-    await this.validateInterviewCompleteness(interviewId);
+    await this.checkInterviewCompleteness(interviewId);
     await this.resetInterviewProgress(interviewId);
     const { title, description } = optionDto;
     return await this.prisma.option.create({
@@ -89,7 +89,7 @@ export class UserSideService {
     userId: number,
   ): Promise<Option> {
     await this.validateUser(interviewId, userId);
-    await this.validateInterviewCompleteness(interviewId);
+    await this.checkInterviewCompleteness(interviewId);
     await this.resetInterviewProgress(interviewId);
     return await this.prisma.option.delete({ where: { id: optionId } });
   }
@@ -102,7 +102,7 @@ export class UserSideService {
     userId: number,
   ): Promise<Expert> {
     await this.validateUser(interviewId, userId);
-    await this.validateInterviewCompleteness(interviewId);
+    await this.checkInterviewCompleteness(interviewId);
     await this.resetInterviewProgress(interviewId);
     const { name } = expertDto;
     return await this.prisma.expert.create({
@@ -131,7 +131,7 @@ export class UserSideService {
     userId: number,
   ): Promise<Expert> {
     await this.validateUser(interviewId, userId);
-    await this.validateInterviewCompleteness(interviewId);
+    await this.checkInterviewCompleteness(interviewId);
     await this.resetInterviewProgress(interviewId);
     return await this.prisma.expert.delete({ where: { id: expertId } });
   }
@@ -152,7 +152,7 @@ export class UserSideService {
     return interview;
   }
 
-  async validateInterviewCompleteness(interviewId: number): Promise<void> {
+  async checkInterviewCompleteness(interviewId: number): Promise<void> {
     const interview = await this.prisma.interview.findUnique({
       where: { id: interviewId },
       include: { options: true, experts: true },
