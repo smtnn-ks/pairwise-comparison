@@ -18,4 +18,18 @@ export class EmailerService {
       `,
     });
   }
+
+  sendInterviewCompleteNotification(to, interviewTitle, interviewId): void {
+    this.mailerService.sendMail({
+      to,
+      subject: 'Your interview is complete',
+      html: `
+        <h1>Interview "${interviewTitle}" is completed.</h1>
+        <p>Click the link below to see details.</p>
+        <a href="${
+          process.env.MAIN_INTERVIEW_ROUTE + interviewId
+        }">I'm the link to see your interview details</a>
+      `,
+    });
+  }
 }

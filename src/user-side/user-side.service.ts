@@ -7,10 +7,14 @@ import { Expert, Interview, Option, Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { generate } from 'shortid';
 import { OnEvent } from '@nestjs/event-emitter';
+import { EmailerService } from 'src/emailer/emailer.service';
 
 @Injectable()
 export class UserSideService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private emailerService: EmailerService,
+  ) {}
 
   async create(
     interviewDto: Prisma.InterviewCreateInput,
@@ -60,12 +64,13 @@ export class UserSideService {
     userId: number,
   ): Promise<Option> {
     await this.validateUser(interviewId, userId);
-    await this.checkInterviewCompleteness(interviewId);
     await this.resetInterviewProgress(interviewId);
     const { title, description } = optionDto;
-    return await this.prisma.option.create({
+    const option = await this.prisma.option.create({
       data: { title, description, interviewId },
     });
+    await this.checkInterviewCompleteness(interviewId);
+    return option;
   }
 
   async updateOption(
@@ -89,9 +94,10 @@ export class UserSideService {
     userId: number,
   ): Promise<Option> {
     await this.validateUser(interviewId, userId);
-    await this.checkInterviewCompleteness(interviewId);
     await this.resetInterviewProgress(interviewId);
-    return await this.prisma.option.delete({ where: { id: optionId } });
+    const option = await this.prisma.option.delete({ where: { id: optionId } });
+    await this.checkInterviewCompleteness(interviewId);
+    return option;
   }
 
   // * Expert
@@ -102,12 +108,13 @@ export class UserSideService {
     userId: number,
   ): Promise<Expert> {
     await this.validateUser(interviewId, userId);
-    await this.checkInterviewCompleteness(interviewId);
     await this.resetInterviewProgress(interviewId);
     const { name } = expertDto;
-    return await this.prisma.expert.create({
+    const expert = await this.prisma.expert.create({
       data: { id: generate(), name, interviewId },
     });
+    await this.checkInterviewCompleteness(interviewId);
+    return expert;
   }
 
   async updateExpert(
@@ -131,9 +138,10 @@ export class UserSideService {
     userId: number,
   ): Promise<Expert> {
     await this.validateUser(interviewId, userId);
-    await this.checkInterviewCompleteness(interviewId);
     await this.resetInterviewProgress(interviewId);
-    return await this.prisma.expert.delete({ where: { id: expertId } });
+    const expert = await this.prisma.expert.delete({ where: { id: expertId } });
+    await this.checkInterviewCompleteness(interviewId);
+    return expert;
   }
 
   // * support functions
@@ -194,10 +202,17 @@ export class UserSideService {
     });
 
     if (interview.experts.every((t: Expert) => t.isDone)) {
-      await this.prisma.interview.update({
+      const interview = await this.prisma.interview.update({
         where: { id: interviewId },
         data: { isDone: true },
+        include: { user: true },
       });
+
+      this.emailerService.sendInterviewCompleteNotification(
+        interview.user.email,
+        interview.title,
+        interview.id,
+      );
     }
   }
 }
