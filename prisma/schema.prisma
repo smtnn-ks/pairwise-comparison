@@ -16,6 +16,10 @@ model User {
   password     String
   refreshToken String @default("")
 
+  // * Email validation
+  isActivated    Boolean @default(false)
+  activationLink String  @unique
+
   // * User - Interview relation
   interviews Interview[]
 }

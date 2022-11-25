@@ -1,4 +1,12 @@
-import { Body, Controller, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthDto } from './dto';
@@ -14,6 +22,13 @@ export class AuthController {
   @Post('signup')
   async signup(@Body() authDto: AuthDto): Promise<User> {
     return await this.authService.signup(authDto);
+  }
+
+  @Get('validate/:activationLink')
+  async validateUser(
+    @Param('activationLink') activationLink: string,
+  ): Promise<User> {
+    return await this.authService.validateUser(activationLink);
   }
 
   @Post('signin')

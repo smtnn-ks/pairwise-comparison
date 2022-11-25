@@ -9,10 +9,16 @@ import { Tokens } from './types';
 import * as bcrypt from 'bcrypt';
 import { User } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
+import { EmailerService } from 'src/emailer/emailer.service';
+import { generate } from 'shortid';
 
 @Injectable()
 export class AuthService {
-  constructor(private prisma: PrismaService, private jwtService: JwtService) {}
+  constructor(
+    private prisma: PrismaService,
+    private jwtService: JwtService,
+    private emailerService: EmailerService,
+  ) {}
 
   async signup(authDto: AuthDto): Promise<User> {
     const { email, password } = authDto;
@@ -21,8 +27,20 @@ export class AuthService {
     if (candidate) throw new BadRequestException('Such users exists already');
 
     const hashPassword = this.hashData(password);
+
+    const activationLink = generate();
+
+    this.emailerService.sendValidationEmail(email, activationLink);
+
     return await this.prisma.user.create({
-      data: { email, password: hashPassword },
+      data: { email, password: hashPassword, activationLink },
+    });
+  }
+
+  async validateUser(activationLink: string): Promise<User> {
+    return await this.prisma.user.update({
+      where: { activationLink },
+      data: { isActivated: true },
     });
   }
 
