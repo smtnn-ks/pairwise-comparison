@@ -56,7 +56,11 @@ export class AuthService {
 
     if (!verifyPassword) throw new BadRequestException('Wrong password');
 
-    return this.generateTokens(candidate.id, candidate.email);
+    return this.generateTokens(
+      candidate.id,
+      candidate.email,
+      candidate.isActivated,
+    );
   }
 
   async logout(id: number): Promise<User> {
@@ -69,8 +73,6 @@ export class AuthService {
 
   async refresh(id: number, refreshToken: string): Promise<Tokens> {
     const user = await this.prisma.user.findUnique({ where: { id } });
-    // if (!user || !user.refreshToken)
-    //   throw new BadRequestException('Invalid token');
     if (!user) throw new BadRequestException('no user');
     if (!user.refreshToken) throw new BadRequestException('no token in db');
     const verifyRefreshToken = this.compareData(
@@ -79,7 +81,7 @@ export class AuthService {
     );
     if (!verifyRefreshToken) throw new BadRequestException('Invalid token');
 
-    return await this.generateTokens(id, user.email);
+    return await this.generateTokens(id, user.email, user.isActivated);
   }
 
   // * Support functions
@@ -89,12 +91,17 @@ export class AuthService {
   compareData = (data: string, encrypted: string) =>
     bcrypt.compareSync(data, encrypted);
 
-  async generateTokens(id: number, email: string): Promise<Tokens> {
+  async generateTokens(
+    id: number,
+    email: string,
+    isActivated: boolean,
+  ): Promise<Tokens> {
     const [at, rt] = await Promise.all([
       this.jwtService.signAsync(
         {
           sub: id,
           email,
+          isActivated,
         },
         {
           privateKey: process.env.AT_SECRET,

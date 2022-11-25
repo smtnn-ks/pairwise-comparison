@@ -32,7 +32,7 @@ model Interview {
   isComplete  Boolean @default(false)
 
   // * User - Interview relation
-  user   User @relation(fields: [userId], references: [id])
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId Int
 
   // * Interview - Option relation
@@ -49,7 +49,7 @@ model Option {
   score       Int    @default(0)
 
   // * Interview - Option relation
-  interview   Interview @relation(fields: [interviewId], references: [id])
+  interview   Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
   interviewId Int
 }
 
@@ -59,6 +59,6 @@ model Expert {
   isDone Boolean @default(false)
 
   // * Interview - Option relation
-  interview   Interview @relation(fields: [interviewId], references: [id])
+  interview   Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
   interviewId Int
 }

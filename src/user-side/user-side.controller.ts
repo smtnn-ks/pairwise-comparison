@@ -11,6 +11,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { Option, Interview, Prisma, Expert } from '@prisma/client';
 import { UserId } from 'src/common/decorators/user-id.decorator';
+import { IsActivated } from 'src/common/guards/is-activated.guard';
 import { UserSideService } from './user-side.service';
 
 @Controller('interviews')
@@ -18,7 +19,7 @@ export class UserSideController {
   constructor(private readonly userSideService: UserSideService) {}
 
   @Post()
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), IsActivated)
   async create(
     @Body() interviewDto: Prisma.InterviewCreateInput,
     @UserId() userId: number,
