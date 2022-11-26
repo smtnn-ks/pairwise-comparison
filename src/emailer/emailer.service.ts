@@ -5,7 +5,7 @@ import { Injectable } from '@nestjs/common';
 export class EmailerService {
   constructor(private mailerService: MailerService) {}
 
-  sendValidationEmail(to, link): void {
+  sendValidationEmail(to: string, link: string): void {
     this.mailerService.sendMail({
       to,
       subject: 'Validate your email address',
@@ -19,7 +19,11 @@ export class EmailerService {
     });
   }
 
-  sendInterviewCompleteNotification(to, interviewTitle, interviewId): void {
+  sendInterviewCompleteNotification(
+    to: string,
+    interviewTitle: string,
+    interviewId: number,
+  ): void {
     this.mailerService.sendMail({
       to,
       subject: 'Your interview is complete',

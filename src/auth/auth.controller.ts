@@ -39,7 +39,6 @@ export class AuthController {
   @Post('logout')
   @UseGuards(AuthGuard('jwt'))
   async logout(@Payload() payload: any): Promise<User> {
-    console.log(payload);
     return await this.authService.logout(payload.sub);
   }
 

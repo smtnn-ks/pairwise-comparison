@@ -56,7 +56,7 @@ export class AuthService {
 
     if (!verifyPassword) throw new BadRequestException('Wrong password');
 
-    return this.generateTokens(
+    return await this.generateTokens(
       candidate.id,
       candidate.email,
       candidate.isActivated,

@@ -45,7 +45,7 @@ export class UserSideService {
   ): Promise<Interview> {
     await this.validateUser(interviewId, userId);
     await this.resetInterviewProgress(interviewId);
-    return await this.prisma.interview.update({
+    return this.prisma.interview.update({
       where: { id: interviewId },
       data: interviewDto,
     });
@@ -65,10 +65,12 @@ export class UserSideService {
   ): Promise<Option> {
     await this.validateUser(interviewId, userId);
     await this.resetInterviewProgress(interviewId);
+
     const { title, description } = optionDto;
     const option = await this.prisma.option.create({
       data: { title, description, interviewId },
     });
+
     await this.checkInterviewCompleteness(interviewId);
     return option;
   }
@@ -81,6 +83,7 @@ export class UserSideService {
   ): Promise<Option> {
     await this.validateUser(interviewId, userId);
     await this.resetInterviewProgress(interviewId);
+
     const { title, description } = optionDto;
     return await this.prisma.option.update({
       where: { id: optionId },
@@ -109,10 +112,12 @@ export class UserSideService {
   ): Promise<Expert> {
     await this.validateUser(interviewId, userId);
     await this.resetInterviewProgress(interviewId);
+
     const { name } = expertDto;
     const expert = await this.prisma.expert.create({
       data: { id: generate(), name, interviewId },
     });
+
     await this.checkInterviewCompleteness(interviewId);
     return expert;
   }
@@ -125,6 +130,7 @@ export class UserSideService {
   ): Promise<Expert> {
     await this.validateUser(interviewId, userId);
     await this.resetInterviewProgress(interviewId);
+
     const { name } = expertDto;
     return await this.prisma.expert.update({
       where: { id: expertId },
@@ -184,18 +190,24 @@ export class UserSideService {
   }
 
   async resetInterviewProgress(interviewId: number): Promise<void> {
-    await this.prisma.option.updateMany({
-      where: { interviewId },
-      data: { score: 0 },
-    });
-    await this.prisma.expert.updateMany({
-      where: { interviewId },
-      data: { isDone: false },
-    });
+    await Promise.all([
+      this.prisma.option.updateMany({
+        where: { interviewId },
+        data: { score: 0 },
+      }),
+      this.prisma.expert.updateMany({
+        where: { interviewId },
+        data: { isDone: false },
+      }),
+      this.prisma.interview.update({
+        where: { id: interviewId },
+        data: { isDone: false },
+      }),
+    ]);
   }
 
   @OnEvent('expertPassedTest')
-  async expertPassedTestCheck(interviewId: number) {
+  async expertPassedTestCheck(interviewId: number): Promise<void> {
     const interview = await this.prisma.interview.findUnique({
       where: { id: interviewId },
       include: { experts: true },
