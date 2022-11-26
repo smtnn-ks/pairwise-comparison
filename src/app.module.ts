@@ -5,6 +5,7 @@ import { UserSideModule } from './user-side/user-side.module';
 import { ExpertSideModule } from './expert-side/expert-side.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { MailerModule } from '@nestjs-modules/mailer';
+import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 
 @Module({
   imports: [
@@ -18,6 +19,13 @@ import { MailerModule } from '@nestjs-modules/mailer';
       transport: process.env.MAIL_TRANSPORT,
       defaults: {
         from: process.env.MAIL_FROM,
+      },
+      template: {
+        dir: __dirname + '/emailer/templates',
+        adapter: new HandlebarsAdapter(),
+        options: {
+          strict: true,
+        },
       },
     }),
   ],
