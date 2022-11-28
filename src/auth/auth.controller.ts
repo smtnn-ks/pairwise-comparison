@@ -14,6 +14,7 @@ import { User } from '@prisma/client';
 import { Tokens } from './types';
 import { Request } from 'express';
 import { Payload } from 'src/common/decorators/payload.decorator';
+import { UserId } from 'src/common/decorators/user-id.decorator';
 
 @Controller('auth')
 export class AuthController {
@@ -49,5 +50,23 @@ export class AuthController {
       req.user['sub'],
       req.user['refreshToken'],
     );
+  }
+
+  @Post('restorePassRequest')
+  async restorePassRequest(
+    @Body() body: { email: string },
+  ): Promise<{ msg: string }> {
+    const { email } = body;
+    return await this.authService.restorePassRequest(email);
+  }
+
+  @Post('restorePass')
+  @UseGuards(AuthGuard('jwt-restore'))
+  async restorePass(
+    @UserId() userId: number,
+    @Body() body: any,
+  ): Promise<User> {
+    const { pass } = body;
+    return await this.authService.restorePass(userId, pass);
   }
 }

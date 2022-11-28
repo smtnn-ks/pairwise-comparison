@@ -11,6 +11,7 @@ import { User } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
 import { EmailerService } from 'src/emailer/emailer.service';
 import { generate } from 'shortid';
+import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class AuthService {
@@ -82,6 +83,40 @@ export class AuthService {
     if (!verifyRefreshToken) throw new BadRequestException('Invalid token');
 
     return await this.generateTokens(id, user.email, user.isActivated);
+  }
+
+  // TODO: validation for email
+  async restorePassRequest(email: string): Promise<{ msg: string }> {
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (!user) throw new BadRequestException('no such user');
+
+    const token = await this.jwtService.signAsync(
+      {
+        sub: user.id,
+      },
+      {
+        privateKey: process.env.PT_SECRET,
+        expiresIn: '10m',
+      },
+    );
+
+    this.emailerService.sendRestore(user.email, token);
+
+    return { msg: 'Email send' };
+  }
+
+  // ! TEST
+
+  async restorePass(id: number, password: string): Promise<User> {
+    const user = await this.prisma.user.findUnique({ where: { id } });
+    if (!user) throw new BadRequestException('no such user');
+
+    const hashPassword = this.hashData(password);
+
+    return await this.prisma.user.update({
+      where: { id },
+      data: { password: hashPassword },
+    });
   }
 
   // * Support functions

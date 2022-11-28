@@ -41,7 +41,19 @@ export class EmailerService {
       template: 'done',
       context: {
         title: interviewTitle,
-        link: process.env.MAIN_INTERVIEW_ROUTE + interviewId,
+        link: process.env.MAIL_INTERVIEW_ROUTE + interviewId,
+      },
+    });
+  }
+
+  sendRestore(to: string, token: string): void {
+    this.mailerService.sendMail({
+      to,
+      subject: 'Restore your password',
+      template: 'reset',
+      context: {
+        link: process.env.MAIL_RESTORE_ROUTE,
+        token,
       },
     });
   }
