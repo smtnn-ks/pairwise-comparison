@@ -2,7 +2,7 @@
 FROM node:16.18.1-alpine
 
 # Create app directory
-WORKDIR /usr/src/app
+WORKDIR /usr/src/backend
 
 # Expose port
 EXPOSE 5000:5000
