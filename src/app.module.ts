@@ -6,6 +6,7 @@ import { ExpertSideModule } from './expert-side/expert-side.module';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
+import { FilerModule } from './filer/filer.module';
 
 @Module({
   imports: [
@@ -28,6 +29,8 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handleba
         },
       },
     }),
+
+    FilerModule,
   ],
 })
 export class AppModule {}
