@@ -9,16 +9,9 @@ export class EmailerService {
     this.mailerService.sendMail({
       to,
       subject: 'Validate your email address',
-      // html: `
-      //   <h1>Welcome to decision making service</h1>
-      //   <p>Click the link below to validate your e-mail address</p>
-      //   <a href="${
-      //     process.env.MAIL_VALIDATION_ROUTE + link
-      //   }">I'm the link to activate your accout</a>
-      // `,
       template: 'welcome',
       context: {
-        link: process.env.MAIL_VALIDATOIN_ROUTE + link,
+        link: process.env.MAIL_VALIDATION_ROUTE + link,
       },
     });
   }
@@ -31,13 +24,6 @@ export class EmailerService {
     this.mailerService.sendMail({
       to,
       subject: 'Your interview is complete',
-      // html: `
-      //   <h1>Interview "${interviewTitle}" is completed.</h1>
-      //   <p>Click the link below to see details.</p>
-      //   <a href="${
-      //     process.env.MAIN_INTERVIEW_ROUTE + interviewId
-      //   }">I'm the link to see your interview details</a>
-      // `,
       template: 'done',
       context: {
         title: interviewTitle,

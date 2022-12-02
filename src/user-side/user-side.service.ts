@@ -51,12 +51,14 @@ export class UserSideService {
     await this.validateUser(interviewId, userId);
     await this.resetInterviewProgress(interviewId);
 
-    const imageName = await this.filerService.uploadImage(image);
-
-    return this.prisma.interview.update({
+    const interview = await this.prisma.interview.update({
       where: { id: interviewId },
-      data: { ...interviewDto, image: imageName },
+      data: { ...interviewDto },
     });
+
+    await this.filerService.updateImage(interview.image, image);
+
+    return interview;
   }
 
   async remove(interviewId: number, userId: number): Promise<Interview> {
@@ -101,11 +103,12 @@ export class UserSideService {
     await this.resetInterviewProgress(interviewId);
 
     const { title, description } = optionDto;
-    const imageName = await this.filerService.uploadImage(image);
-    return await this.prisma.option.update({
+    const option = await this.prisma.option.update({
       where: { id: optionId },
-      data: { title, description, image: imageName },
+      data: { title, description },
     });
+    await this.filerService.updateImage(option.image, image);
+    return option;
   }
 
   async removeOption(

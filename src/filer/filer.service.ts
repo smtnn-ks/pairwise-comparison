@@ -14,6 +14,8 @@ import { catchError, map, firstValueFrom } from 'rxjs';
 export class FilerService {
   constructor(private httpService: HttpService) {}
 
+  // ! remove filerController
+
   async uploadImage(image: Express.Multer.File): Promise<string> {
     const formData = new FormData();
     formData.append('image', image.buffer, { filename: image.originalname });
