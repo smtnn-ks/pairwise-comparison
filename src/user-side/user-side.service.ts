@@ -8,21 +8,25 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { generate } from 'shortid';
 import { OnEvent } from '@nestjs/event-emitter';
 import { EmailerService } from 'src/emailer/emailer.service';
+import { FilerService } from 'src/filer/filer.service';
 
 @Injectable()
 export class UserSideService {
   constructor(
     private prisma: PrismaService,
     private emailerService: EmailerService,
+    private filerService: FilerService,
   ) {}
 
   async create(
     interviewDto: Prisma.InterviewCreateInput,
+    image: Express.Multer.File,
     userId: number,
   ): Promise<Interview> {
     const { title, description } = interviewDto;
+    const imageName = await this.filerService.uploadImage(image);
     return await this.prisma.interview.create({
-      data: { title, description, userId },
+      data: { title, description, userId, image: imageName },
     });
   }
 
@@ -40,26 +44,35 @@ export class UserSideService {
 
   async update(
     interviewDto: Prisma.InterviewUpdateInput,
+    image: Express.Multer.File,
     interviewId: number,
     userId: number,
   ): Promise<Interview> {
     await this.validateUser(interviewId, userId);
     await this.resetInterviewProgress(interviewId);
+
+    const imageName = await this.filerService.uploadImage(image);
+
     return this.prisma.interview.update({
       where: { id: interviewId },
-      data: interviewDto,
+      data: { ...interviewDto, image: imageName },
     });
   }
 
   async remove(interviewId: number, userId: number): Promise<Interview> {
     await this.validateUser(interviewId, userId);
-    return await this.prisma.interview.delete({ where: { id: interviewId } });
+    const interview = await this.prisma.interview.delete({
+      where: { id: interviewId },
+    });
+    await this.filerService.deleteImage(interview.image);
+    return interview;
   }
 
   // * Option
 
   async createOption(
     optionDto: Prisma.OptionCreateInput,
+    image: Express.Multer.File,
     interviewId: number,
     userId: number,
   ): Promise<Option> {
@@ -67,8 +80,10 @@ export class UserSideService {
     await this.resetInterviewProgress(interviewId);
 
     const { title, description } = optionDto;
+    const imageName = await this.filerService.uploadImage(image);
+
     const option = await this.prisma.option.create({
-      data: { title, description, interviewId },
+      data: { title, description, interviewId, image: imageName },
     });
 
     await this.checkInterviewCompleteness(interviewId);
@@ -77,6 +92,7 @@ export class UserSideService {
 
   async updateOption(
     optionDto: Prisma.OptionUpdateInput,
+    image: Express.Multer.File,
     optionId: number,
     interviewId: number,
     userId: number,
@@ -85,9 +101,10 @@ export class UserSideService {
     await this.resetInterviewProgress(interviewId);
 
     const { title, description } = optionDto;
+    const imageName = await this.filerService.uploadImage(image);
     return await this.prisma.option.update({
       where: { id: optionId },
-      data: { title, description },
+      data: { title, description, image: imageName },
     });
   }
 
@@ -100,6 +117,7 @@ export class UserSideService {
     await this.resetInterviewProgress(interviewId);
     const option = await this.prisma.option.delete({ where: { id: optionId } });
     await this.checkInterviewCompleteness(interviewId);
+    await this.filerService.deleteImage(option.image);
     return option;
   }
 

@@ -1,8 +1,10 @@
 import {
   Controller,
+  Delete,
   Get,
   Param,
   Post,
+  Put,
   Query,
   UploadedFile,
   UseInterceptors,
@@ -16,8 +18,24 @@ export class FilerController {
   constructor(private filerService: FilerService) {}
 
   @Post()
-  @UseInterceptors(FileInterceptor('file'))
-  async createFile(@UploadedFile() file: Express.Multer.File): Promise<string> {
-    return await this.filerService.createFile(file);
+  @UseInterceptors(FileInterceptor('image'))
+  async uploadImage(
+    @UploadedFile() image: Express.Multer.File,
+  ): Promise<string> {
+    return await this.filerService.uploadImage(image);
+  }
+
+  @Put(':imageName')
+  @UseInterceptors(FileInterceptor('image'))
+  async updateImage(
+    @Param('imageName') imageName: string,
+    @UploadedFile() image: Express.Multer.File,
+  ): Promise<string> {
+    return await this.filerService.updateImage(imageName, image);
+  }
+
+  @Delete(':imageName')
+  async deleteImage(@Param('imageName') imageName: string): Promise<string> {
+    return await this.filerService.deleteImage(imageName);
   }
 }

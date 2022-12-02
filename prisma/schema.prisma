@@ -15,6 +15,7 @@ model User {
   email        String @unique
   password     String
   refreshToken String @default("")
+  image        String @default("")
 
   // * Email validation
   isActivated    Boolean @default(false)
@@ -30,6 +31,7 @@ model Interview {
   description String
   isDone      Boolean @default(false)
   isComplete  Boolean @default(false)
+  image       String  @default("")
 
   // * User - Interview relation
   user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -47,6 +49,7 @@ model Option {
   title       String
   description String
   score       Int    @default(0)
+  image       String @default("")
 
   // * Interview - Option relation
   interview   Interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)

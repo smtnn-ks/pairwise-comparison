@@ -11,7 +11,6 @@ import { User } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
 import { EmailerService } from 'src/emailer/emailer.service';
 import { generate } from 'shortid';
-import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class AuthService {
@@ -85,7 +84,6 @@ export class AuthService {
     return await this.generateTokens(id, user.email, user.isActivated);
   }
 
-  // TODO: validation for email
   async restorePassRequest(email: string): Promise<{ msg: string }> {
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user) throw new BadRequestException('no such user');
@@ -104,8 +102,6 @@ export class AuthService {
 
     return { msg: 'Email send' };
   }
-
-  // ! TEST
 
   async restorePass(id: number, password: string): Promise<User> {
     const user = await this.prisma.user.findUnique({ where: { id } });

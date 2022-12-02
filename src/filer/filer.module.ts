@@ -6,7 +6,7 @@ import { HttpModule } from '@nestjs/axios';
 @Module({
   imports: [HttpModule],
   providers: [FilerService],
-  exports: [FilerService],
   controllers: [FilerController],
+  exports: [FilerService],
 })
 export class FilerModule {}

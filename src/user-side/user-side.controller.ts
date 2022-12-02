@@ -6,9 +6,12 @@ import {
   Param,
   Post,
   Put,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { Option, Interview, Prisma, Expert } from '@prisma/client';
 import { UserId } from 'src/common/decorators/user-id.decorator';
 import { IsActivated } from 'src/common/guards/is-activated.guard';
@@ -20,11 +23,13 @@ export class UserSideController {
 
   @Post()
   @UseGuards(AuthGuard('jwt'), IsActivated)
+  @UseInterceptors(FileInterceptor('image'))
   async create(
     @Body() interviewDto: Prisma.InterviewCreateInput,
+    @UploadedFile() image: Express.Multer.File,
     @UserId() userId: number,
   ): Promise<Interview> {
-    return await this.userSideService.create(interviewDto, userId);
+    return await this.userSideService.create(interviewDto, image, userId);
   }
 
   @Get()
@@ -44,13 +49,16 @@ export class UserSideController {
 
   @Put(':id')
   @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(FileInterceptor('image'))
   async update(
     @Body() interviewDto: Prisma.InterviewUpdateInput,
+    @UploadedFile() image: Express.Multer.File,
     @Param('id') interviewId: string,
     @UserId() userId: number,
   ): Promise<Interview> {
     return await this.userSideService.update(
       interviewDto,
+      image,
       +interviewId,
       userId,
     );
@@ -67,13 +75,16 @@ export class UserSideController {
 
   @Post(':id/options')
   @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(FileInterceptor('image'))
   async createOption(
     @Body() optionDto: Prisma.OptionCreateInput,
+    @UploadedFile() image: Express.Multer.File,
     @Param('id') interviewId: string,
     @UserId() userId: number,
   ): Promise<Option> {
     return await this.userSideService.createOption(
       optionDto,
+      image,
       +interviewId,
       userId,
     );
@@ -81,14 +92,17 @@ export class UserSideController {
 
   @Put(':interviewId/options/:optionId')
   @UseGuards(AuthGuard('jwt'))
+  @UseInterceptors(FileInterceptor('image'))
   async updateOption(
     @Body() optionDto: Prisma.OptionUpdateInput,
+    @UploadedFile() image: Express.Multer.File,
     @Param('optionId') optionId: string,
     @Param('interviewId') interviewId: string,
     @UserId() userId: number,
   ): Promise<Option> {
     return await this.userSideService.updateOption(
       optionDto,
+      image,
       +optionId,
       +interviewId,
       userId,
