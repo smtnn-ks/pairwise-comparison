@@ -27,7 +27,6 @@ export class AuthService {
     if (candidate) throw new BadRequestException('Such users exists already');
 
     const hashPassword = this.hashData(password);
-
     const activationLink = generate();
 
     this.emailerService.sendValidationEmail(email, activationLink);

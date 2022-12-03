@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
-import { AuthDto } from './dto';
+import { AuthDto, RestorePassDto } from './dto';
 import { User } from '@prisma/client';
 import { Tokens } from './types';
 import { Request } from 'express';
@@ -64,7 +64,7 @@ export class AuthController {
   @UseGuards(AuthGuard('jwt-restore'))
   async restorePass(
     @UserId() userId: number,
-    @Body() body: any,
+    @Body() body: RestorePassDto,
   ): Promise<User> {
     const { pass } = body;
     return await this.authService.restorePass(userId, pass);

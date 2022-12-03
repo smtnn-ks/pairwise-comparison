@@ -15,7 +15,6 @@ model User {
   email        String @unique
   password     String
   refreshToken String @default("")
-  image        String @default("")
 
   // * Email validation
   isActivated    Boolean @default(false)

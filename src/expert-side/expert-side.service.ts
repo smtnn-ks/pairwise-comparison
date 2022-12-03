@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Expert, Option } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -21,15 +25,13 @@ export class ExpertSideService {
       if (expert.interview.isComplete) {
         return expert;
       } else {
-        return { msg: 'interview is not complete' };
+        throw new ForbiddenException('interview is not complete');
       }
     } else {
-      return { msg: 'no such expert' };
+      throw new BadRequestException('no such expert');
     }
   }
 
-  // TODO: add ids validation
-  // TODO: parallel as much as possible and not break it
   async sendResults(
     expertId: string,
     results: SendResultDto[],
@@ -39,21 +41,22 @@ export class ExpertSideService {
       include: { interview: { include: { options: true } } },
     });
 
-    // * results id validation
-    // ! Yet to test
+    if (!expertData) throw new BadRequestException('no such expert');
+    if (!expertData.interview.isComplete)
+      throw new ForbiddenException('interview is not complete');
+    if (expertData.isDone)
+      throw new ForbiddenException(
+        'this expert has passed the interview already',
+      );
     if (!this.validateIDs(results, expertData.interview.options))
       throw new BadRequestException('set of ids is not valid');
+    if (!this.validateScores(results))
+      throw new BadRequestException('scores are not valid');
 
-    if (expertData.isDone) {
-      throw new BadRequestException('This expert has passed interview already');
-    } else if (!expertData.interview.isComplete) {
-      throw new BadRequestException('Interview is not complete');
-    } else {
-      await this.prisma.expert.update({
-        where: { id: expertId },
-        data: { isDone: true },
-      });
-    }
+    await this.prisma.expert.update({
+      where: { id: expertId },
+      data: { isDone: true },
+    });
 
     this.eventEmitter.emit('expertPassedTest', expertData.interview.id);
 
@@ -75,6 +78,8 @@ export class ExpertSideService {
     return { msg: 'result is applied' };
   }
 
+  // support functions
+
   validateIDs(results: SendResultDto[], options: Option[]): boolean {
     const resultIDs: Set<number> = new Set<number>();
     const optionIDs: Set<number> = new Set<number>();
@@ -91,5 +96,19 @@ export class ExpertSideService {
       resultIDs.size === optionIDs.size &&
       [...resultIDs].every((value) => optionIDs.has(value))
     );
+  }
+
+  validateScores(results: SendResultDto[]): boolean {
+    let sum: number = 0;
+    for (let item of results) {
+      if (item.score > results.length) return false;
+      sum += item.score;
+    }
+    return sum === this.factorial(results.length - 1);
+  }
+
+  factorial(x: number): number {
+    if (x === 0 || x === 1) return 1;
+    return x * this.factorial(x - 1);
   }
 }
