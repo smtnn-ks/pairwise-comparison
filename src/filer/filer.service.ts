@@ -54,7 +54,8 @@ export class FilerService {
         .put<string>(process.env.FILE_SERVER_URL + '/' + imageName, formData)
         .pipe(
           catchError((error: AxiosError) => {
-            throw new HttpException(error.response.data, error.response.status);
+            console.log(error);
+            throw new InternalServerErrorException(error.message);
           }),
         ),
     );
