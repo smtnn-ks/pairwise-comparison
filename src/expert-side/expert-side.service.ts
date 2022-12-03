@@ -51,7 +51,7 @@ export class ExpertSideService {
     if (!this.validateIDs(results, expertData.interview.options))
       throw new BadRequestException('set of ids is not valid');
     if (!this.validateScores(results))
-      throw new BadRequestException('scores are not valid');
+      throw new BadRequestException('scores are not vali');
 
     await this.prisma.expert.update({
       where: { id: expertId },
