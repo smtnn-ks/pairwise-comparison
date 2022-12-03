@@ -90,14 +90,14 @@ export class UserSideController {
     );
   }
 
-  @Put(':interviewId/options/:optionId')
+  @Put(':interview-id/options/:option-id')
   @UseGuards(AuthGuard('jwt'))
   @UseInterceptors(FileInterceptor('image'))
   async updateOption(
     @Body() optionDto: Prisma.OptionUpdateInput,
     @UploadedFile() image: Express.Multer.File,
-    @Param('optionId') optionId: string,
-    @Param('interviewId') interviewId: string,
+    @Param('option-id') optionId: string,
+    @Param('interview-id') interviewId: string,
     @UserId() userId: number,
   ): Promise<Option> {
     return await this.userSideService.updateOption(
@@ -109,11 +109,11 @@ export class UserSideController {
     );
   }
 
-  @Delete(':interviewId/options/:optionId')
+  @Delete(':interview-id/options/:option-id')
   @UseGuards(AuthGuard('jwt'))
   async removeOption(
-    @Param('optionId') optionId: string,
-    @Param('interviewId') interviewId: string,
+    @Param('option-id') optionId: string,
+    @Param('interview-id') interviewId: string,
     @UserId() userId: number,
   ): Promise<Option> {
     return await this.userSideService.removeOption(
@@ -123,11 +123,11 @@ export class UserSideController {
     );
   }
 
-  @Post(':interviewId/experts')
+  @Post(':interview-id/experts')
   @UseGuards(AuthGuard('jwt'))
   async createExpert(
     @Body() expertDto: Prisma.ExpertCreateInput,
-    @Param('interviewId') interviewId: string,
+    @Param('interview-id') interviewId: string,
     @UserId() userId: number,
   ): Promise<Expert> {
     return await this.userSideService.createExpert(
@@ -137,12 +137,12 @@ export class UserSideController {
     );
   }
 
-  @Put(':interviewId/experts/:expertId')
+  @Put(':interview-id/experts/:expert-id')
   @UseGuards(AuthGuard('jwt'))
   async updateExpert(
     @Body() expertDto: Prisma.ExpertUpdateInput,
-    @Param('expertId') expertId: string,
-    @Param('interviewId') interviewId: string,
+    @Param('expert-id') expertId: string,
+    @Param('interview-id') interviewId: string,
     @UserId() userId: number,
   ): Promise<Expert> {
     return await this.userSideService.updateExpert(
@@ -153,11 +153,11 @@ export class UserSideController {
     );
   }
 
-  @Delete(':interviewId/experts/:expertId')
+  @Delete(':interview-id/experts/:expert-id')
   @UseGuards(AuthGuard('jwt'))
   async deleteExpert(
-    @Param('expertId') expertId: string,
-    @Param('interviewId') interviewId: string,
+    @Param('expert-id') expertId: string,
+    @Param('interview-id') interviewId: string,
     @UserId() userId: number,
   ): Promise<Expert> {
     return await this.userSideService.removeExpert(

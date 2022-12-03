@@ -25,9 +25,9 @@ export class AuthController {
     return await this.authService.signup(authDto);
   }
 
-  @Get('validate/:activationLink')
+  @Get('validate/:activation-link')
   async validateUser(
-    @Param('activationLink') activationLink: string,
+    @Param('activation-link') activationLink: string,
   ): Promise<User> {
     return await this.authService.validateUser(activationLink);
   }
@@ -52,7 +52,7 @@ export class AuthController {
     );
   }
 
-  @Post('restorePassRequest')
+  @Post('restore-pass-request')
   async restorePassRequest(
     @Body() body: { email: string },
   ): Promise<{ msg: string }> {
@@ -60,7 +60,7 @@ export class AuthController {
     return await this.authService.restorePassRequest(email);
   }
 
-  @Post('restorePass')
+  @Post('restore-pass')
   @UseGuards(AuthGuard('jwt-restore'))
   async restorePass(
     @UserId() userId: number,

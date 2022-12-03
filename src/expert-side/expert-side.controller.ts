@@ -7,14 +7,14 @@ import { ExpertSideService } from './expert-side.service';
 export class ExpertSideController {
   constructor(private readonly expertSideService: ExpertSideService) {}
 
-  @Get(':expertId')
+  @Get(':expert-id')
   async getOptions(
-    @Param('expertId') expertId: string,
+    @Param('expert-id') expertId: string,
   ): Promise<Expert | { msg: string }> {
     return await this.expertSideService.getOptions(expertId);
   }
 
-  @Post(':expertId')
+  @Post(':expert-id')
   async sendResults(
     @Param('expertId') expertId: string,
     @Body() results: SendResultDto[],
