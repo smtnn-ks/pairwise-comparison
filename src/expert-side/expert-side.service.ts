@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Expert, Option } from '@prisma/client';
@@ -28,7 +29,7 @@ export class ExpertSideService {
         throw new ForbiddenException('interview is not complete');
       }
     } else {
-      throw new BadRequestException('no such expert');
+      throw new NotFoundException('no such expert');
     }
   }
 
@@ -41,7 +42,7 @@ export class ExpertSideService {
       include: { interview: { include: { options: true } } },
     });
 
-    if (!expertData) throw new BadRequestException('no such expert');
+    if (!expertData) throw new NotFoundException('no such expert');
     if (!expertData.interview.isComplete)
       throw new ForbiddenException('interview is not complete');
     if (expertData.isDone)
@@ -51,7 +52,7 @@ export class ExpertSideService {
     if (!this.validateIDs(results, expertData.interview.options))
       throw new BadRequestException('set of ids is not valid');
     if (!this.validateScores(results))
-      throw new BadRequestException('scores are not vali');
+      throw new BadRequestException('scores are not valid');
 
     await this.prisma.expert.update({
       where: { id: expertId },
@@ -75,7 +76,7 @@ export class ExpertSideService {
 
     await Promise.all(calls);
 
-    return { msg: 'result is applied' };
+    return { msg: 'results are applied' };
   }
 
   // support functions
@@ -84,11 +85,11 @@ export class ExpertSideService {
     const resultIDs: Set<number> = new Set<number>();
     const optionIDs: Set<number> = new Set<number>();
 
-    for (let t of results) {
+    for (const t of results) {
       resultIDs.add(t.id);
     }
 
-    for (let t of options) {
+    for (const t of options) {
       optionIDs.add(t.id);
     }
 
@@ -99,8 +100,8 @@ export class ExpertSideService {
   }
 
   validateScores(results: SendResultDto[]): boolean {
-    let sum: number = 0;
-    for (let item of results) {
+    let sum = 0;
+    for (const item of results) {
       if (item.score > results.length) return false;
       sum += item.score;
     }

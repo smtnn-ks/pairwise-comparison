@@ -1,5 +1,5 @@
 import {
-  BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -181,7 +181,7 @@ export class UserSideService {
     });
     if (!interview) throw new NotFoundException();
     if (interview.userId !== userId)
-      throw new BadRequestException(
+      throw new ForbiddenException(
         `Interview ${interviewId} does not belong to user ${userId}`,
       );
     return interview;

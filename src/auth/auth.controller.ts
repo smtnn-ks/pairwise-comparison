@@ -9,7 +9,7 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
-import { AuthDto, RestorePassDto } from './dto';
+import { AuthDto, RestorePassDto, RestorePassRequestDto } from './dto';
 import { User } from '@prisma/client';
 import { Tokens } from './types';
 import { Request } from 'express';
@@ -25,7 +25,7 @@ export class AuthController {
     return await this.authService.signup(authDto);
   }
 
-  @Get('validate/:activation-link')
+  @Post('validate/:activation-link')
   async validateUser(
     @Param('activation-link') activationLink: string,
   ): Promise<User> {
@@ -54,7 +54,7 @@ export class AuthController {
 
   @Post('restore-pass-request')
   async restorePassRequest(
-    @Body() body: { email: string },
+    @Body() body: RestorePassRequestDto,
   ): Promise<{ msg: string }> {
     const { email } = body;
     return await this.authService.restorePassRequest(email);

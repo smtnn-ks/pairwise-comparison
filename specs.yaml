@@ -1,0 +1,643 @@
+openapi: 3.0.0
+
+info:
+  version: 0.0.1
+  title: OpenAPI спецификация backend составляющей сервиса попарного сравнения
+
+paths:
+  /auth/signup:
+    post:
+      summary: Регистрация пользователя
+      operationId: signup
+      tags:
+        - auth
+      requestBody:
+        $ref: '#/components/requestBodies/authSign'
+      responses:
+        '201':
+          $ref: '#/components/responses/authUser'
+        '400':
+          $ref: '#/components/responses/authSign400'
+        '403':
+          $ref: '#/components/responses/authSignup403'
+
+  /auth/signin:
+    post:
+      summary: Получение токенов доступа и обновления для пользователя
+      operationId: signin
+      tags:
+        - auth
+      requestBody:
+        $ref: '#/components/requestBodies/authSign'
+      responses:
+        '201':
+          $ref: '#/components/responses/tokens'
+        '400':
+          $ref: '#/components/responses/authSign400'
+        '403':
+          $ref: '#/components/responses/authSignin403'
+
+  /auth/logout:
+    post:
+      summary: Удаление токена обновления пользователя из базы данных
+      operationId: logout
+      tags:
+        - auth
+      security:
+        - BearerAuth: []
+      responses:
+        '201':
+          $ref: '#/components/responses/authUser'
+        '401':
+          $ref: '#/components/responses/401'
+
+  /auth/refresh:
+    post:
+      summary: Обновления токенов доступа и обновления
+      description: В хедере нужно указать токен обновления
+      operationId: refresh
+      tags:
+        - auth
+      security:
+        - BearerAuth: []
+      responses:
+        '201':
+          $ref: '#/components/responses/tokens'
+        '401':
+          $ref: '#/components/responses/401'
+
+  /auth/validate/{activationLink}:
+    post:
+      summary: Активация пользователя
+      description: Письмо с ссылкой активации отправляется электронную почту пользователя
+      parameters:
+        - in: path
+          name: activationLink
+          required: true
+          schema:
+            type: string
+            example: PPBqWA9
+      responses:
+        '201':
+          $ref: '#/components/responses/authUser'
+        '404':
+          $ref: '#/components/responses/authValidate404'
+
+  /auth/restore-pass-request:
+    post:
+      summary: Запрос на восстановление пароля
+      description: Письмо для восстановления пароля будет отправлено на электронную почту
+      requestBody:
+        $ref: '#/components/requestBodies/authRestorePassRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/authRestorePassRequest201'
+        '400':
+          $ref: '#/components/responses/authRestorePassRequest404'
+
+  /auth/restore-pass:
+    post:
+      summary: Восстановление пароля
+      description: Запрос валидируется с помощью токена в теле запроса
+      requestBody:
+        $ref: '#/components/requestBodies/authRestorePass'
+      responses:
+        '201':
+          $ref: '#/components/responses/authUser'
+        '401':
+          $ref: '#/components/responses/401'
+
+  /interviews:
+    post:
+      summary: Создание опроса
+      operationId: createInterview
+      tags:
+        - user-side
+      security:
+        - BearerToken: []
+      requestBody:
+        $ref: '#/components/requestBodies/interview'
+      responses:
+        '201':
+          $ref: '#/components/responses/interviewShort'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/notActivated'
+
+    get:
+      summary: Список опросов пользователя
+      operationId: getInterviews
+      tags:
+        - user-side
+      security:
+        - BearerToken: []
+      responses:
+        '200':
+          description: Cписок опросов пользователя
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/interviewShort'
+        '401':
+          $ref: '#/components/responses/401'
+
+  /interviews/{interviewId}:
+    get:
+      summary: Данные об опросе
+      operationId: getInterview
+      tags:
+        - user-side
+      security:
+        - BearerToken: []
+      parameters:
+        - $ref: '#/components/parameters/interviewId'
+      responses:
+        '200':
+          $ref: '#/components/responses/interviewFull'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/notActivated'
+
+    put:
+      summary: Обновление данных опроса
+      operationId: updateInterview
+      tags:
+        - user-side
+      security:
+        - BearerToken: []
+      parameters:
+        - $ref: '#/components/parameters/interviewId'
+      requestBody:
+        $ref: '#/components/requestBodies/interview'
+      responses:
+        '201':
+          $ref: '#/components/responses/interviewShort'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+          $ref: '#/components/responses/notActivated'
+
+    delete:
+      summary: Удаление опроса
+      operationId: deleteInterview
+      tags:
+        - user-side
+      security:
+        - BearerToken: []
+      parameters:
+        - $ref: '#/components/parameters/interviewId'
+      responses:
+        '200':
+          $ref: '#/components/responses/interviewShort'
+        '401':
+          $ref: '#/components/responses/401'
+        '403':
+        '404':
+
+################################################################################
+
+components:
+  schemas:
+    user:
+      type: object
+      required:
+        - id
+        - email
+      properties:
+        id:
+          type: number
+          example: 1
+        email:
+          type: string
+          example: example@mail.com
+
+    authSign:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          example: example@mail.com
+        password:
+          type: string
+          format: password
+          example: qwerty1234
+
+    authWrongCredentials:
+      type: object
+      required:
+        - statusCode
+        - message
+        - error
+      properties:
+        statusCode:
+          type: number
+          example: 400
+        message:
+          type: string
+          enum:
+            - password must be longer than or equal to 8 characters
+            - password must be shorter or equal to 30 characters
+            - email must be email
+        error:
+          type: string
+          example: Bad request
+
+    authSignup403:
+      type: object
+      required:
+        - statusCode
+        - message
+        - error
+      properties:
+        statusCode:
+          type: string
+          example: 403
+        message:
+          type: string
+          example: such user exists already
+        error:
+          type: string
+          example: Forbidden
+
+    tokens:
+      type: object
+      required:
+        - accessToken
+        - refreshToken
+      properties:
+        accessToken:
+          type: string
+          format: jwt
+        refreshToken:
+          type: string
+          format: jwt
+
+    authValidate404:
+      type: object
+      required:
+        - statusCode
+        - message
+        - error
+      properties:
+        statusCode:
+          type: number
+          example: 404
+        message:
+          type: string
+          example: wrong activation link
+        error:
+          type: string
+          example: Bad Request
+
+    authSignin403:
+      type: object
+      required:
+        - statusCode
+        - message
+        - error
+      properties:
+        statusCode:
+          type: number
+          example: 403
+        message:
+          type: string
+          example: wrong credentials
+
+    authRestorePassRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          example: example@mail.com
+
+    interviewShort:
+      type: object
+      required:
+        - id
+        - title
+        - description
+        - isDone
+        - isComplete
+        - image
+        - userId
+      properties:
+        id:
+          type: number
+          example: 1
+        title:
+          type: string
+          example: Заголовок опроса
+        description:
+          type: string
+          example: Описание опроса
+        isDone:
+          description: Окончен ли опрос
+          type: boolean
+          example: false
+        isComplete:
+          description: Удовлетворяет ли опрос минимальным требованиям
+          type: boolean
+          example: false
+        image:
+          description: Имя файла на файловом сервере
+          type: string
+          format: binary
+        userId:
+          type: number
+          example: 1
+
+    option:
+      type: object
+      required:
+        - id
+        - title
+        - description
+        - score
+        - image
+        - interviewId
+      properties:
+        id:
+          type: number
+          example: 1
+        title:
+          type: string
+          example: Заголовок варианта
+        description:
+          type: string
+          example: Описание варианта
+        score:
+          type: number
+          example: 0
+        image:
+          type: string
+          description: Название файла на файловом сервере
+        interviewId:
+          type: number
+          example: 1
+
+    expert:
+      type: object
+      required:
+        - id
+        - name
+        - isDone
+        - interviewId
+      properties:
+        id:
+          type: number
+          example: 1
+        name:
+          type: string
+          example: Имя эксперта
+        isDone:
+          description: Прошел ли эксперт опрос
+          type: boolean
+          example: false
+        interviewId:
+          type: number
+          example: 1
+
+  requestBodies:
+    authSign:
+      description: Данные для авторизации
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/authSign'
+
+    authRestorePassRequest:
+      description: Электронная почта для восстановления пароля
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/authRestorePassRequest'
+
+    authRestorePass:
+      description: Данные для восстановления пароля
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - token
+              - pass
+            properties:
+              token:
+                type: string
+                format: jwt
+              pass:
+                type: string
+                format: password
+                example: qwerty1234
+
+    interview:
+      description: Данные для создания опроса
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - title
+              - description
+            properties:
+              title:
+                type: string
+                example: Заголовок опроса
+              description:
+                type: string
+                example: Описание опроса
+
+  responses:
+    authUser:
+      description: Данные пользователя
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/user'
+
+    authSign400:
+      description: Данные введены неверно
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/authWrongCredentials'
+
+    authSignup403:
+      description: Пользователь с данным адресом электронной почты уже существует
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/authSignup403'
+
+    tokens:
+      description: Токены доступа и обновления
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/tokens'
+
+    '401':
+      description: Токен не указан или недействителен
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - statusCode
+              - message
+            properties:
+              statusCode:
+                type: number
+                example: 401
+              message:
+                type: string
+                example: Unauthorized
+
+    authValidate404:
+      description: Неверная ссылка активации
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/authValidate404'
+
+    authSignin403:
+      description: Указанные данные неверны
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/authSignin403'
+
+    authRestorePassRequest201:
+      description: Письмо отправлено на электронную почту
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - msg
+            properties:
+              msg:
+                type: string
+                example: email send
+
+    authRestorePassRequest404:
+      description: Пользователь не найден
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - statusCode
+              - message
+              - error
+            properties:
+              statusCode:
+                type: number
+                example: 404
+              message:
+                type: string
+                example: no such user
+              error:
+                type: string
+                example: Bad Request
+
+    interviewShort:
+      description: Краткие сведения об опроса
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/interviewShort'
+
+    notActivated:
+      description: Пользователь не активирован
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - statusCode
+              - message
+              - error
+            properties:
+              statusCode:
+                type: number
+                example: 403
+              message:
+                type: string
+                example: user is not activated
+              error:
+                type: string
+                example: Forbidden
+
+    interviewFull:
+      description: Полное описание опроса
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - id
+              - title
+              - description
+              - isDone
+              - isComplete
+              - image
+              - userId
+              - options
+              - experts
+            properties:
+              id:
+                type: number
+                example: 1
+              title:
+                type: string
+                example: Заголовок опроса
+              description:
+                type: string
+                example: Описание опроса
+              isDone:
+                description: Окончен ли опрос
+                type: boolean
+                example: false
+              isComplete:
+                description: Удовлетворяет ли опрос минимальным требованиям
+                type: boolean
+                example: false
+              image:
+                description: Имя файла на файловом сервере
+                type: string
+                format: binary
+              userId:
+                type: number
+                example: 1
+              options:
+                type: array
+                items:
+                  $ref: '#/components/schemas/option'
+              experts:
+                type: array
+                items:
+                  $ref: '#/components/schemas/expert'
+
+  parameters:
+    interviewId:
+      in: path
+      name: iterviewId
+      required: true
+      schema:
+        type: number
+        example: 1
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer

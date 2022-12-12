@@ -1,7 +1,9 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AuthDto } from './dto';
@@ -24,7 +26,7 @@ export class AuthService {
     const { email, password } = authDto;
 
     const candidate = await this.prisma.user.findUnique({ where: { email } });
-    if (candidate) throw new BadRequestException('Such users exists already');
+    if (candidate) throw new ForbiddenException('such users exists already');
 
     const hashPassword = this.hashData(password);
     const activationLink = generate();
@@ -37,10 +39,12 @@ export class AuthService {
   }
 
   async validateUser(activationLink: string): Promise<User> {
-    return await this.prisma.user.update({
+    const user = await this.prisma.user.update({
       where: { activationLink },
       data: { isActivated: true },
     });
+    if (!user) throw new NotFoundException('wrong activation link');
+    return user;
   }
 
   async signin(authDto: AuthDto): Promise<Tokens> {
@@ -49,11 +53,11 @@ export class AuthService {
     const candidate = await this.prisma.user.findUnique({
       where: { email },
     });
-    if (!candidate) throw new BadRequestException('No such user');
+    if (!candidate) throw new ForbiddenException('wrong credentials');
 
     const verifyPassword = this.compareData(password, candidate.password);
 
-    if (!verifyPassword) throw new BadRequestException('Wrong password');
+    if (!verifyPassword) throw new ForbiddenException('wrong credentials');
 
     return await this.generateTokens(
       candidate.id,
@@ -63,22 +67,23 @@ export class AuthService {
   }
 
   async logout(id: number): Promise<User> {
-    if (!id) throw new NotFoundException('no id');
-    return await this.prisma.user.update({
+    if (!id) throw new UnauthorizedException();
+    const user = await this.prisma.user.update({
       where: { id },
       data: { refreshToken: '' },
     });
+    if (!user) throw new UnauthorizedException();
+    return user;
   }
 
   async refresh(id: number, refreshToken: string): Promise<Tokens> {
     const user = await this.prisma.user.findUnique({ where: { id } });
-    if (!user) throw new BadRequestException('no user');
-    if (!user.refreshToken) throw new BadRequestException('no token in db');
+    if (!user || !user.refreshToken) throw new UnauthorizedException();
     const verifyRefreshToken = this.compareData(
       refreshToken,
       user.refreshToken,
     );
-    if (!verifyRefreshToken) throw new BadRequestException('Invalid token');
+    if (!verifyRefreshToken) throw new UnauthorizedException();
 
     return await this.generateTokens(id, user.email, user.isActivated);
   }
@@ -99,12 +104,12 @@ export class AuthService {
 
     this.emailerService.sendRestore(user.email, token);
 
-    return { msg: 'Email send' };
+    return { msg: 'email send' };
   }
 
   async restorePass(id: number, password: string): Promise<User> {
     const user = await this.prisma.user.findUnique({ where: { id } });
-    if (!user) throw new BadRequestException('no such user');
+    if (!user) throw new UnauthorizedException();
 
     const hashPassword = this.hashData(password);
 
