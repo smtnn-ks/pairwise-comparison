@@ -1,9 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { AuthDto } from './dto';
+import { AuthDto, UserResponseDto } from './dto';
 import { Tokens } from './types';
 import * as bcrypt from 'bcrypt';
-import { User } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
 import { EmailerService } from 'src/emailer/emailer.service';
 import { generate } from 'shortid';
@@ -17,7 +16,7 @@ export class AuthService {
     private emailerService: EmailerService,
   ) {}
 
-  async signup(authDto: AuthDto): Promise<User> {
+  async signup(authDto: AuthDto): Promise<UserResponseDto> {
     const { email, password } = authDto;
 
     const candidate = await this.prisma.user.findUnique({ where: { email } });
@@ -30,13 +29,15 @@ export class AuthService {
 
     return await this.prisma.user.create({
       data: { email, password: hashPassword, activationLink },
+      select: { id: true, email: true, isActivated: true },
     });
   }
 
-  async validateUser(activationLink: string): Promise<User> {
+  async validateUser(activationLink: string): Promise<UserResponseDto> {
     const user = await this.prisma.user.update({
       where: { activationLink },
       data: { isActivated: true },
+      select: { id: true, email: true, isActivated: true },
     });
     if (!user) throw AppError.wrongActivationLinkException();
     return user;
@@ -60,11 +61,12 @@ export class AuthService {
     );
   }
 
-  async logout(id: number): Promise<User> {
+  async logout(id: number): Promise<UserResponseDto> {
     if (!id) throw AppError.invalidTokenException();
     const user = await this.prisma.user.update({
       where: { id },
       data: { refreshToken: '' },
+      select: { id: true, email: true, isActivated: true },
     });
     if (!user) throw AppError.invalidTokenException();
     return user;
@@ -82,7 +84,7 @@ export class AuthService {
     return await this.generateTokens(id, user.email, user.isActivated);
   }
 
-  async restorePassRequest(email: string): Promise<{ msg: string }> {
+  async restorePassRequest(email: string): Promise<string> {
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user) throw AppError.noSuchUserException();
 
@@ -98,10 +100,10 @@ export class AuthService {
 
     this.emailerService.sendRestore(user.email, token);
 
-    return { msg: 'email send' };
+    return 'email send';
   }
 
-  async restorePass(id: number, password: string): Promise<User> {
+  async restorePass(id: number, password: string): Promise<UserResponseDto> {
     const user = await this.prisma.user.findUnique({ where: { id } });
     if (!user) throw AppError.invalidTokenException();
 
@@ -110,6 +112,7 @@ export class AuthService {
     return await this.prisma.user.update({
       where: { id },
       data: { password: hashPassword },
+      select: { id: true, email: true, isActivated: true },
     });
   }
 

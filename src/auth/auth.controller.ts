@@ -9,8 +9,12 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
-import { AuthDto, RestorePassDto, RestorePassRequestDto } from './dto';
-import { User } from '@prisma/client';
+import {
+  AuthDto,
+  RestorePassDto,
+  RestorePassRequestDto,
+  UserResponseDto,
+} from './dto';
 import { Tokens } from './types';
 import { Request } from 'express';
 import { Payload } from 'src/common/decorators/payload.decorator';
@@ -21,14 +25,14 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('signup')
-  async signup(@Body() authDto: AuthDto): Promise<User> {
+  async signup(@Body() authDto: AuthDto): Promise<UserResponseDto> {
     return await this.authService.signup(authDto);
   }
 
   @Patch('validate/:activationLink')
   async validateUser(
     @Param('activationLink') activationLink: string,
-  ): Promise<User> {
+  ): Promise<UserResponseDto> {
     return await this.authService.validateUser(activationLink);
   }
 
@@ -39,7 +43,7 @@ export class AuthController {
 
   @Post('logout')
   @UseGuards(AuthGuard('jwt'))
-  async logout(@Payload() payload: any): Promise<User> {
+  async logout(@Payload() payload: any): Promise<UserResponseDto> {
     return await this.authService.logout(payload.sub);
   }
 
@@ -55,7 +59,7 @@ export class AuthController {
   @Post('restore-pass-request')
   async restorePassRequest(
     @Body() body: RestorePassRequestDto,
-  ): Promise<{ msg: string }> {
+  ): Promise<string> {
     const { email } = body;
     return await this.authService.restorePassRequest(email);
   }
@@ -65,7 +69,7 @@ export class AuthController {
   async restorePass(
     @UserId() userId: number,
     @Body() body: RestorePassDto,
-  ): Promise<User> {
+  ): Promise<UserResponseDto> {
     const { pass } = body;
     return await this.authService.restorePass(userId, pass);
   }

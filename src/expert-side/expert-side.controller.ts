@@ -8,9 +8,7 @@ export class ExpertSideController {
   constructor(private readonly expertSideService: ExpertSideService) {}
 
   @Get(':expertId')
-  async getOptions(
-    @Param('expertId') expertId: string,
-  ): Promise<Expert | { msg: string }> {
+  async getOptions(@Param('expertId') expertId: string): Promise<Expert> {
     return await this.expertSideService.getOptions(expertId);
   }
 
@@ -18,7 +16,7 @@ export class ExpertSideController {
   async sendResults(
     @Param('expertId') expertId: string,
     @Body() results: SendResultDto[],
-  ): Promise<{ msg: string }> {
+  ): Promise<string> {
     return await this.expertSideService.sendResults(expertId, results);
   }
 }

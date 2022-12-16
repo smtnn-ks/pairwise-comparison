@@ -12,7 +12,7 @@ export class ExpertSideService {
     private eventEmitter: EventEmitter2,
   ) {}
 
-  async getOptions(expertId: string): Promise<Expert | { msg: string }> {
+  async getOptions(expertId: string): Promise<Expert> {
     const expert = await this.prisma.expert.findUnique({
       where: { id: expertId },
       include: { interview: { include: { options: true } } },
@@ -32,7 +32,7 @@ export class ExpertSideService {
   async sendResults(
     expertId: string,
     results: SendResultDto[],
-  ): Promise<{ msg: string }> {
+  ): Promise<string> {
     const expertData = await this.prisma.expert.findUnique({
       where: { id: expertId },
       include: { interview: { include: { options: true } } },
@@ -69,7 +69,7 @@ export class ExpertSideService {
 
     await Promise.all(calls);
 
-    return { msg: 'results are applied' };
+    return 'results are applied';
   }
 
   // support functions
