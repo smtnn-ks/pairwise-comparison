@@ -21,7 +21,7 @@ export class UserSideService {
     userId: number,
   ): Promise<Interview> {
     const { title, description } = interviewDto;
-    const imageName = await this.filerService.uploadImage(image);
+    const imageName = image ? await this.filerService.uploadImage(image) : '';
     return await this.prisma.interview.create({
       data: { title, description, userId, image: imageName },
     });
@@ -53,7 +53,7 @@ export class UserSideService {
       data: { ...interviewDto },
     });
 
-    await this.filerService.updateImage(interview.image, image);
+    if (image) await this.filerService.updateImage(interview.image, image);
 
     return interview;
   }
@@ -79,7 +79,7 @@ export class UserSideService {
     await this.resetInterviewProgress(interviewId);
 
     const { title, description } = optionDto;
-    const imageName = await this.filerService.uploadImage(image);
+    const imageName = image ? await this.filerService.uploadImage(image) : '';
 
     const option = await this.prisma.option.create({
       data: { title, description, interviewId, image: imageName },
@@ -104,7 +104,7 @@ export class UserSideService {
       where: { id: optionId },
       data: { title, description },
     });
-    await this.filerService.updateImage(option.image, image);
+    if (image) await this.filerService.updateImage(option.image, image);
     return option;
   }
 

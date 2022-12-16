@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
-import { Expert, Option } from '@prisma/client';
+import { Expert } from '@prisma/client';
 import { SendResultDto } from './dto/send-result.dto';
 import { ExpertSideService } from './expert-side.service';
 
@@ -7,14 +7,14 @@ import { ExpertSideService } from './expert-side.service';
 export class ExpertSideController {
   constructor(private readonly expertSideService: ExpertSideService) {}
 
-  @Get(':expert-id')
+  @Get(':expertId')
   async getOptions(
-    @Param('expert-id') expertId: string,
+    @Param('expertId') expertId: string,
   ): Promise<Expert | { msg: string }> {
     return await this.expertSideService.getOptions(expertId);
   }
 
-  @Post(':expert-id')
+  @Post(':expertId')
   async sendResults(
     @Param('expertId') expertId: string,
     @Body() results: SendResultDto[],
