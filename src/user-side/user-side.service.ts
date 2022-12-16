@@ -1,14 +1,11 @@
-import {
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Expert, Interview, Option, Prisma } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { generate } from 'shortid';
 import { OnEvent } from '@nestjs/event-emitter';
 import { EmailerService } from 'src/emailer/emailer.service';
 import { FilerService } from 'src/filer/filer.service';
+import { AppError } from 'src/common/errors/errors';
 
 @Injectable()
 export class UserSideService {
@@ -179,11 +176,9 @@ export class UserSideService {
     const interview = await this.prisma.interview.findUnique({
       where: { id: interviewId },
     });
-    if (!interview) throw new NotFoundException();
+    if (!interview) throw AppError.noInterviewException();
     if (interview.userId !== userId)
-      throw new ForbiddenException(
-        `Interview ${interviewId} does not belong to user ${userId}`,
-      );
+      throw AppError.interviewDoesNotBelongToUserException();
     return interview;
   }
 

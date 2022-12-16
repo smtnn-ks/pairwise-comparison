@@ -1,10 +1,4 @@
-import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AuthDto } from './dto';
 import { Tokens } from './types';
@@ -13,6 +7,7 @@ import { User } from '@prisma/client';
 import { JwtService } from '@nestjs/jwt';
 import { EmailerService } from 'src/emailer/emailer.service';
 import { generate } from 'shortid';
+import { AppError } from 'src/common/errors/errors';
 
 @Injectable()
 export class AuthService {
@@ -26,7 +21,7 @@ export class AuthService {
     const { email, password } = authDto;
 
     const candidate = await this.prisma.user.findUnique({ where: { email } });
-    if (candidate) throw new ForbiddenException('such users exists already');
+    if (candidate) throw AppError.suchUserExistsException();
 
     const hashPassword = this.hashData(password);
     const activationLink = generate();
@@ -43,7 +38,7 @@ export class AuthService {
       where: { activationLink },
       data: { isActivated: true },
     });
-    if (!user) throw new NotFoundException('wrong activation link');
+    if (!user) throw AppError.wrongActivationLinkException();
     return user;
   }
 
@@ -53,11 +48,10 @@ export class AuthService {
     const candidate = await this.prisma.user.findUnique({
       where: { email },
     });
-    if (!candidate) throw new ForbiddenException('wrong credentials');
+    if (!candidate) throw AppError.wrongCredentialsException();
 
     const verifyPassword = this.compareData(password, candidate.password);
-
-    if (!verifyPassword) throw new ForbiddenException('wrong credentials');
+    if (!verifyPassword) throw AppError.wrongCredentialsException();
 
     return await this.generateTokens(
       candidate.id,
@@ -67,30 +61,30 @@ export class AuthService {
   }
 
   async logout(id: number): Promise<User> {
-    if (!id) throw new UnauthorizedException();
+    if (!id) throw AppError.invalidTokenException();
     const user = await this.prisma.user.update({
       where: { id },
       data: { refreshToken: '' },
     });
-    if (!user) throw new UnauthorizedException();
+    if (!user) throw AppError.invalidTokenException();
     return user;
   }
 
   async refresh(id: number, refreshToken: string): Promise<Tokens> {
     const user = await this.prisma.user.findUnique({ where: { id } });
-    if (!user || !user.refreshToken) throw new UnauthorizedException();
+    if (!user || !user.refreshToken) throw AppError.invalidTokenException();
     const verifyRefreshToken = this.compareData(
       refreshToken,
       user.refreshToken,
     );
-    if (!verifyRefreshToken) throw new UnauthorizedException();
+    if (!verifyRefreshToken) throw AppError.invalidTokenException();
 
     return await this.generateTokens(id, user.email, user.isActivated);
   }
 
   async restorePassRequest(email: string): Promise<{ msg: string }> {
     const user = await this.prisma.user.findUnique({ where: { email } });
-    if (!user) throw new BadRequestException('no such user');
+    if (!user) throw AppError.noSuchUserException();
 
     const token = await this.jwtService.signAsync(
       {
@@ -109,7 +103,7 @@ export class AuthService {
 
   async restorePass(id: number, password: string): Promise<User> {
     const user = await this.prisma.user.findUnique({ where: { id } });
-    if (!user) throw new UnauthorizedException();
+    if (!user) throw AppError.invalidTokenException();
 
     const hashPassword = this.hashData(password);
 

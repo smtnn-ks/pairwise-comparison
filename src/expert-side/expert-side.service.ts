@@ -1,13 +1,9 @@
-import {
-  BadRequestException,
-  ForbiddenException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Expert, Option } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { SendResultDto } from './dto/send-result.dto';
+import { AppError } from 'src/common/errors/errors';
 
 @Injectable()
 export class ExpertSideService {
@@ -26,10 +22,10 @@ export class ExpertSideService {
       if (expert.interview.isComplete) {
         return expert;
       } else {
-        throw new ForbiddenException('interview is not complete');
+        throw AppError.interviewIsNotCompleteException();
       }
     } else {
-      throw new NotFoundException('no such expert');
+      throw AppError.noSuchExpertException();
     }
   }
 
@@ -42,17 +38,14 @@ export class ExpertSideService {
       include: { interview: { include: { options: true } } },
     });
 
-    if (!expertData) throw new NotFoundException('no such expert');
+    if (!expertData) throw AppError.noSuchExpertException();
     if (!expertData.interview.isComplete)
-      throw new ForbiddenException('interview is not complete');
+      throw AppError.interviewIsNotCompleteException();
     if (expertData.isDone)
-      throw new ForbiddenException(
-        'this expert has passed the interview already',
-      );
+      throw AppError.expertPassedInterviewAlreadyException();
     if (!this.validateIDs(results, expertData.interview.options))
-      throw new BadRequestException('set of ids is not valid');
-    if (!this.validateScores(results))
-      throw new BadRequestException('scores are not valid');
+      throw AppError.invalidSetOfIdsException();
+    if (!this.validateScores(results)) throw AppError.invalidScoresException();
 
     await this.prisma.expert.update({
       where: { id: expertId },
