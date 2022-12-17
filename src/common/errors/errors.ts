@@ -152,4 +152,16 @@ export class AppError {
       },
       400,
     );
+
+  static emailerException = (e: any): HttpException =>
+    new HttpException(
+      { status: 500, message: 'emailer error', error: 400, errorCause: e },
+      500,
+    );
+
+  static fileServerException = (e: any): HttpException =>
+    new HttpException(
+      { status: 500, message: 'file server error', error: 401, errorCause: e },
+      500,
+    );
 }
