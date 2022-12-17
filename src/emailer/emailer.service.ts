@@ -6,8 +6,9 @@ import { AppException } from 'src/common/exceptions/exceptions';
 export class EmailerService {
   constructor(private mailerService: MailerService) {}
 
-  sendValidationEmail(to: string, link: string): void {
+  sendActivationEmail(to: string, link: string): void {
     try {
+      console.log(process.env.MAIL_VALIDATION_ROUTE + link);
       this.mailerService.sendMail({
         to,
         subject: 'Validate your email address',

@@ -20,15 +20,18 @@ export class UserSideService {
     image: Express.Multer.File,
     userId: number,
   ): Promise<Interview> {
+    const { title, description } = interviewDto;
+    let imageName;
+
     try {
-      const { title, description } = interviewDto;
-      const imageName = image ? await this.filerService.uploadImage(image) : '';
-      return await this.prisma.interview.create({
-        data: { title, description, userId, image: imageName },
-      });
+      imageName = image ? await this.filerService.uploadImage(image) : '';
     } catch (e) {
       throw AppException.fileServerException(e);
     }
+
+    return await this.prisma.interview.create({
+      data: { title, description, userId, image: imageName },
+    });
   }
 
   async findMany(userId: number): Promise<Interview[]> {
@@ -49,34 +52,35 @@ export class UserSideService {
     interviewId: number,
     userId: number,
   ): Promise<Interview> {
+    await this.validateUser(interviewId, userId);
+    await this.resetInterviewProgress(interviewId);
+
+    const interview = await this.prisma.interview.update({
+      where: { id: interviewId },
+      data: { ...interviewDto },
+    });
+
     try {
-      await this.validateUser(interviewId, userId);
-      await this.resetInterviewProgress(interviewId);
-
-      const interview = await this.prisma.interview.update({
-        where: { id: interviewId },
-        data: { ...interviewDto },
-      });
-
       if (image) await this.filerService.updateImage(interview.image, image);
-
-      return interview;
     } catch (e) {
       throw AppException.fileServerException(e);
     }
+
+    return interview;
   }
 
   async remove(interviewId: number, userId: number): Promise<Interview> {
+    await this.validateUser(interviewId, userId);
+    const interview = await this.prisma.interview.delete({
+      where: { id: interviewId },
+    });
+
     try {
-      await this.validateUser(interviewId, userId);
-      const interview = await this.prisma.interview.delete({
-        where: { id: interviewId },
-      });
       await this.filerService.deleteImage(interview.image);
-      return interview;
     } catch (e) {
       throw AppException.fileServerException(e);
     }
+    return interview;
   }
 
   // * Option
@@ -87,22 +91,24 @@ export class UserSideService {
     interviewId: number,
     userId: number,
   ): Promise<Option> {
+    await this.validateUser(interviewId, userId);
+    await this.resetInterviewProgress(interviewId);
+
+    const { title, description } = optionDto;
+    let imageName;
+
     try {
-      await this.validateUser(interviewId, userId);
-      await this.resetInterviewProgress(interviewId);
-
-      const { title, description } = optionDto;
-      const imageName = image ? await this.filerService.uploadImage(image) : '';
-
-      const option = await this.prisma.option.create({
-        data: { title, description, interviewId, image: imageName },
-      });
-
-      await this.checkInterviewCompleteness(interviewId);
-      return option;
+      imageName = image ? await this.filerService.uploadImage(image) : '';
     } catch (e) {
       throw AppException.fileServerException(e);
     }
+
+    const option = await this.prisma.option.create({
+      data: { title, description, interviewId, image: imageName },
+    });
+
+    await this.checkInterviewCompleteness(interviewId);
+    return option;
   }
 
   async updateOption(
@@ -112,20 +118,22 @@ export class UserSideService {
     interviewId: number,
     userId: number,
   ): Promise<Option> {
-    try {
-      await this.validateUser(interviewId, userId);
-      await this.resetInterviewProgress(interviewId);
+    await this.validateUser(interviewId, userId);
+    await this.resetInterviewProgress(interviewId);
 
-      const { title, description } = optionDto;
-      const option = await this.prisma.option.update({
-        where: { id: optionId },
-        data: { title, description },
-      });
+    const { title, description } = optionDto;
+    const option = await this.prisma.option.update({
+      where: { id: optionId },
+      data: { title, description },
+    });
+
+    try {
       if (image) await this.filerService.updateImage(option.image, image);
-      return option;
     } catch (e) {
       throw AppException.fileServerException(e);
     }
+
+    return option;
   }
 
   async removeOption(
@@ -133,18 +141,20 @@ export class UserSideService {
     interviewId: number,
     userId: number,
   ): Promise<Option> {
+    await this.validateUser(interviewId, userId);
+    await this.resetInterviewProgress(interviewId);
+    const option = await this.prisma.option.delete({
+      where: { id: optionId },
+    });
+    await this.checkInterviewCompleteness(interviewId);
+
     try {
-      await this.validateUser(interviewId, userId);
-      await this.resetInterviewProgress(interviewId);
-      const option = await this.prisma.option.delete({
-        where: { id: optionId },
-      });
-      await this.checkInterviewCompleteness(interviewId);
       await this.filerService.deleteImage(option.image);
-      return option;
     } catch (e) {
       throw AppException.fileServerException(e);
     }
+
+    return option;
   }
 
   // * Expert
@@ -262,11 +272,15 @@ export class UserSideService {
         include: { user: true },
       });
 
-      this.emailerService.sendInterviewCompleteNotification(
-        interview.user.email,
-        interview.title,
-        interview.id,
-      );
+      try {
+        this.emailerService.sendInterviewCompleteNotification(
+          interview.user.email,
+          interview.title,
+          interview.id,
+        );
+      } catch (e) {
+        throw AppException.emailerException(e);
+      }
     }
   }
 }

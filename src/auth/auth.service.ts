@@ -25,7 +25,11 @@ export class AuthService {
     const hashPassword = this.hashData(password);
     const activationLink = generate();
 
-    this.emailerService.sendValidationEmail(email, activationLink);
+    try {
+      this.emailerService.sendActivationEmail(email, activationLink);
+    } catch (e) {
+      throw AppException.emailerException(e);
+    }
 
     return await this.prisma.user.create({
       data: { email, password: hashPassword, activationLink },
@@ -33,7 +37,7 @@ export class AuthService {
     });
   }
 
-  async validateUser(activationLink: string): Promise<UserResponseDto> {
+  async activateUser(activationLink: string): Promise<UserResponseDto> {
     const user = await this.prisma.user.update({
       where: { activationLink },
       data: { isActivated: true },
@@ -98,7 +102,11 @@ export class AuthService {
       },
     );
 
-    this.emailerService.sendRestore(user.email, token);
+    try {
+      this.emailerService.sendRestore(user.email, token);
+    } catch (e) {
+      throw AppException.emailerException(e);
+    }
 
     return 'email send';
   }

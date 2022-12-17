@@ -1,8 +1,8 @@
 import {
   Body,
   Controller,
+  Get,
   Param,
-  Patch,
   Post,
   Req,
   UseGuards,
@@ -29,11 +29,11 @@ export class AuthController {
     return await this.authService.signup(authDto);
   }
 
-  @Patch('validate/:activationLink')
-  async validateUser(
+  @Get('activate/:activationLink')
+  async activateUser(
     @Param('activationLink') activationLink: string,
   ): Promise<UserResponseDto> {
-    return await this.authService.validateUser(activationLink);
+    return await this.authService.activateUser(activationLink);
   }
 
   @Post('signin')

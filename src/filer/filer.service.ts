@@ -1,14 +1,12 @@
 import {
-  BadRequestException,
   HttpException,
-  HttpStatus,
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
-import { AxiosError, AxiosResponse } from 'axios';
+import { AxiosError } from 'axios';
 import * as FormData from 'form-data';
-import { catchError, map, firstValueFrom } from 'rxjs';
+import { catchError, firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class FilerService {
