@@ -3,7 +3,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Expert, Option } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { SendResultDto } from './dto/send-result.dto';
-import { AppError } from 'src/common/errors/errors';
+import { AppException } from 'src/common/exceptions/exceptions';
 
 @Injectable()
 export class ExpertSideService {
@@ -22,10 +22,10 @@ export class ExpertSideService {
       if (expert.interview.isComplete) {
         return expert;
       } else {
-        throw AppError.interviewIsNotCompleteException();
+        throw AppException.interviewIsNotCompleteException();
       }
     } else {
-      throw AppError.noSuchExpertException();
+      throw AppException.noSuchExpertException();
     }
   }
 
@@ -38,14 +38,15 @@ export class ExpertSideService {
       include: { interview: { include: { options: true } } },
     });
 
-    if (!expertData) throw AppError.noSuchExpertException();
+    if (!expertData) throw AppException.noSuchExpertException();
     if (!expertData.interview.isComplete)
-      throw AppError.interviewIsNotCompleteException();
+      throw AppException.interviewIsNotCompleteException();
     if (expertData.isDone)
-      throw AppError.expertPassedInterviewAlreadyException();
+      throw AppException.expertPassedInterviewAlreadyException();
     if (!this.validateIDs(results, expertData.interview.options))
-      throw AppError.invalidSetOfIdsException();
-    if (!this.validateScores(results)) throw AppError.invalidScoresException();
+      throw AppException.invalidSetOfIdsException();
+    if (!this.validateScores(results))
+      throw AppException.invalidScoresException();
 
     await this.prisma.expert.update({
       where: { id: expertId },

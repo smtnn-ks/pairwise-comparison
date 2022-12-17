@@ -5,7 +5,7 @@ import { generate } from 'shortid';
 import { OnEvent } from '@nestjs/event-emitter';
 import { EmailerService } from 'src/emailer/emailer.service';
 import { FilerService } from 'src/filer/filer.service';
-import { AppError } from 'src/common/errors/errors';
+import { AppException } from 'src/common/exceptions/exceptions';
 
 @Injectable()
 export class UserSideService {
@@ -27,7 +27,7 @@ export class UserSideService {
         data: { title, description, userId, image: imageName },
       });
     } catch (e) {
-      throw AppError.fileServerException(e);
+      throw AppException.fileServerException(e);
     }
   }
 
@@ -62,7 +62,7 @@ export class UserSideService {
 
       return interview;
     } catch (e) {
-      throw AppError.fileServerException(e);
+      throw AppException.fileServerException(e);
     }
   }
 
@@ -75,7 +75,7 @@ export class UserSideService {
       await this.filerService.deleteImage(interview.image);
       return interview;
     } catch (e) {
-      throw AppError.fileServerException(e);
+      throw AppException.fileServerException(e);
     }
   }
 
@@ -101,7 +101,7 @@ export class UserSideService {
       await this.checkInterviewCompleteness(interviewId);
       return option;
     } catch (e) {
-      throw AppError.fileServerException(e);
+      throw AppException.fileServerException(e);
     }
   }
 
@@ -124,7 +124,7 @@ export class UserSideService {
       if (image) await this.filerService.updateImage(option.image, image);
       return option;
     } catch (e) {
-      throw AppError.fileServerException(e);
+      throw AppException.fileServerException(e);
     }
   }
 
@@ -143,7 +143,7 @@ export class UserSideService {
       await this.filerService.deleteImage(option.image);
       return option;
     } catch (e) {
-      throw AppError.fileServerException(e);
+      throw AppException.fileServerException(e);
     }
   }
 
@@ -202,9 +202,9 @@ export class UserSideService {
     const interview = await this.prisma.interview.findUnique({
       where: { id: interviewId },
     });
-    if (!interview) throw AppError.noInterviewException();
+    if (!interview) throw AppException.noInterviewException();
     if (interview.userId !== userId)
-      throw AppError.interviewDoesNotBelongToUserException();
+      throw AppException.interviewDoesNotBelongToUserException();
     return interview;
   }
 

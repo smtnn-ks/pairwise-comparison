@@ -6,7 +6,7 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { EmailerService } from 'src/emailer/emailer.service';
 import { generate } from 'shortid';
-import { AppError } from 'src/common/errors/errors';
+import { AppException } from 'src/common/exceptions/exceptions';
 
 @Injectable()
 export class AuthService {
@@ -20,7 +20,7 @@ export class AuthService {
     const { email, password } = authDto;
 
     const candidate = await this.prisma.user.findUnique({ where: { email } });
-    if (candidate) throw AppError.suchUserExistsException();
+    if (candidate) throw AppException.suchUserExistsException();
 
     const hashPassword = this.hashData(password);
     const activationLink = generate();
@@ -39,7 +39,7 @@ export class AuthService {
       data: { isActivated: true },
       select: { id: true, email: true, isActivated: true },
     });
-    if (!user) throw AppError.wrongActivationLinkException();
+    if (!user) throw AppException.wrongActivationLinkException();
     return user;
   }
 
@@ -49,10 +49,10 @@ export class AuthService {
     const candidate = await this.prisma.user.findUnique({
       where: { email },
     });
-    if (!candidate) throw AppError.wrongCredentialsException();
+    if (!candidate) throw AppException.wrongCredentialsException();
 
     const verifyPassword = this.compareData(password, candidate.password);
-    if (!verifyPassword) throw AppError.wrongCredentialsException();
+    if (!verifyPassword) throw AppException.wrongCredentialsException();
 
     return await this.generateTokens(
       candidate.id,
@@ -62,31 +62,31 @@ export class AuthService {
   }
 
   async logout(id: number): Promise<UserResponseDto> {
-    if (!id) throw AppError.invalidTokenException();
+    if (!id) throw AppException.invalidTokenException();
     const user = await this.prisma.user.update({
       where: { id },
       data: { refreshToken: '' },
       select: { id: true, email: true, isActivated: true },
     });
-    if (!user) throw AppError.invalidTokenException();
+    if (!user) throw AppException.invalidTokenException();
     return user;
   }
 
   async refresh(id: number, refreshToken: string): Promise<Tokens> {
     const user = await this.prisma.user.findUnique({ where: { id } });
-    if (!user || !user.refreshToken) throw AppError.invalidTokenException();
+    if (!user || !user.refreshToken) throw AppException.invalidTokenException();
     const verifyRefreshToken = this.compareData(
       refreshToken,
       user.refreshToken,
     );
-    if (!verifyRefreshToken) throw AppError.invalidTokenException();
+    if (!verifyRefreshToken) throw AppException.invalidTokenException();
 
     return await this.generateTokens(id, user.email, user.isActivated);
   }
 
   async restorePassRequest(email: string): Promise<string> {
     const user = await this.prisma.user.findUnique({ where: { email } });
-    if (!user) throw AppError.noSuchUserException();
+    if (!user) throw AppException.noSuchUserException();
 
     const token = await this.jwtService.signAsync(
       {
@@ -105,7 +105,7 @@ export class AuthService {
 
   async restorePass(id: number, password: string): Promise<UserResponseDto> {
     const user = await this.prisma.user.findUnique({ where: { id } });
-    if (!user) throw AppError.invalidTokenException();
+    if (!user) throw AppException.invalidTokenException();
 
     const hashPassword = this.hashData(password);
 

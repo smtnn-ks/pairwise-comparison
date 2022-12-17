@@ -1,6 +1,6 @@
 import { HttpException } from '@nestjs/common';
 
-export class AppError {
+export class AppException {
   static suchUserExistsException = (): HttpException =>
     new HttpException(
       { status: 405, message: 'such user exists already', error: 100 },

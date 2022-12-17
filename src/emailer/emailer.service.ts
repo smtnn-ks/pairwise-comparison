@@ -1,6 +1,6 @@
 import { MailerService } from '@nestjs-modules/mailer';
 import { Injectable } from '@nestjs/common';
-import { AppError } from 'src/common/errors/errors';
+import { AppException } from 'src/common/exceptions/exceptions';
 
 @Injectable()
 export class EmailerService {
@@ -17,7 +17,7 @@ export class EmailerService {
         },
       });
     } catch (e) {
-      throw AppError.emailerException(e);
+      throw AppException.emailerException(e);
     }
   }
 
@@ -37,7 +37,7 @@ export class EmailerService {
         },
       });
     } catch (e) {
-      throw AppError.emailerException(e);
+      throw AppException.emailerException(e);
     }
   }
 
@@ -53,7 +53,7 @@ export class EmailerService {
         },
       });
     } catch (e) {
-      throw AppError.emailerException(e);
+      throw AppException.emailerException(e);
     }
   }
 }
