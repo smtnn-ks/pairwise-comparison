@@ -1,11 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { Expert, Interview, Option, Prisma } from '@prisma/client';
+import { Expert, Interview, Option } from '@prisma/client';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { generate } from 'shortid';
 import { OnEvent } from '@nestjs/event-emitter';
 import { EmailerService } from 'src/emailer/emailer.service';
 import { FilerService } from 'src/filer/filer.service';
 import { AppException } from 'src/common/exceptions/exceptions';
+import { ExpertDto, InterviewDto, OptionDto } from './dto';
 
 @Injectable()
 export class UserSideService {
@@ -16,22 +17,21 @@ export class UserSideService {
   ) {}
 
   async create(
-    interviewDto: Prisma.InterviewCreateInput,
+    interviewDto: InterviewDto,
     image: Express.Multer.File,
     userId: number,
   ): Promise<Interview> {
     const { title, description } = interviewDto;
-    let imageName;
+    const imageName = image ? await this.filerService.uploadImage(image) : '';
 
     try {
-      imageName = image ? await this.filerService.uploadImage(image) : '';
+      return await this.prisma.interview.create({
+        data: { title, description, userId, image: imageName },
+      });
     } catch (e) {
-      throw AppException.fileServerException(e);
+      if (imageName) await this.filerService.deleteImage(imageName);
+      throw AppException.interviewLimitException(e);
     }
-
-    return await this.prisma.interview.create({
-      data: { title, description, userId, image: imageName },
-    });
   }
 
   async findMany(userId: number): Promise<Interview[]> {
@@ -47,7 +47,7 @@ export class UserSideService {
   }
 
   async update(
-    interviewDto: Prisma.InterviewUpdateInput,
+    interviewDto: InterviewDto,
     image: Express.Multer.File,
     interviewId: number,
     userId: number,
@@ -60,11 +60,7 @@ export class UserSideService {
       data: { ...interviewDto },
     });
 
-    try {
-      if (image) await this.filerService.updateImage(interview.image, image);
-    } catch (e) {
-      throw AppException.fileServerException(e);
-    }
+    if (image) await this.filerService.updateImage(interview.image, image);
 
     return interview;
   }
@@ -75,18 +71,14 @@ export class UserSideService {
       where: { id: interviewId },
     });
 
-    try {
-      await this.filerService.deleteImage(interview.image);
-    } catch (e) {
-      throw AppException.fileServerException(e);
-    }
+    await this.filerService.deleteImage(interview.image);
     return interview;
   }
 
   // * Option
 
   async createOption(
-    optionDto: Prisma.OptionCreateInput,
+    optionDto: OptionDto,
     image: Express.Multer.File,
     interviewId: number,
     userId: number,
@@ -95,24 +87,26 @@ export class UserSideService {
     await this.resetInterviewProgress(interviewId);
 
     const { title, description } = optionDto;
-    let imageName;
+
+    const imageName = image ? await this.filerService.uploadImage(image) : '';
+
+    let option: Option;
 
     try {
-      imageName = image ? await this.filerService.uploadImage(image) : '';
+      option = await this.prisma.option.create({
+        data: { title, description, interviewId, image: imageName },
+      });
     } catch (e) {
-      throw AppException.fileServerException(e);
+      if (imageName) await this.filerService.deleteImage(imageName);
+      throw AppException.optionLimitException(e);
     }
-
-    const option = await this.prisma.option.create({
-      data: { title, description, interviewId, image: imageName },
-    });
 
     await this.checkInterviewCompleteness(interviewId);
     return option;
   }
 
   async updateOption(
-    optionDto: Prisma.OptionUpdateInput,
+    optionDto: OptionDto,
     image: Express.Multer.File,
     optionId: number,
     interviewId: number,
@@ -127,11 +121,7 @@ export class UserSideService {
       data: { title, description },
     });
 
-    try {
-      if (image) await this.filerService.updateImage(option.image, image);
-    } catch (e) {
-      throw AppException.fileServerException(e);
-    }
+    if (image) await this.filerService.updateImage(option.image, image);
 
     return option;
   }
@@ -148,11 +138,7 @@ export class UserSideService {
     });
     await this.checkInterviewCompleteness(interviewId);
 
-    try {
-      await this.filerService.deleteImage(option.image);
-    } catch (e) {
-      throw AppException.fileServerException(e);
-    }
+    await this.filerService.deleteImage(option.image);
 
     return option;
   }
@@ -160,7 +146,7 @@ export class UserSideService {
   // * Expert
 
   async createExpert(
-    expertDto: Prisma.ExpertCreateInput,
+    expertDto: ExpertDto,
     interviewId: number,
     userId: number,
   ): Promise<Expert> {
@@ -168,16 +154,22 @@ export class UserSideService {
     await this.resetInterviewProgress(interviewId);
 
     const { name } = expertDto;
-    const expert = await this.prisma.expert.create({
-      data: { id: generate(), name, interviewId },
-    });
+    let expert: Expert;
+
+    try {
+      expert = await this.prisma.expert.create({
+        data: { id: generate(), name, interviewId },
+      });
+    } catch (e) {
+      throw AppException.expertLimitException(e);
+    }
 
     await this.checkInterviewCompleteness(interviewId);
     return expert;
   }
 
   async updateExpert(
-    expertDto: Prisma.ExpertUpdateInput,
+    expertDto: ExpertDto,
     expertId: string,
     interviewId: number,
     userId: number,

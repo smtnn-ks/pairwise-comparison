@@ -164,4 +164,37 @@ export class AppException {
       { status: 500, message: 'file server error', error: 401, errorCause: e },
       500,
     );
+
+  static interviewLimitException = (e: any): HttpException =>
+    new HttpException(
+      {
+        status: 500,
+        message: 'this user cannot have more interviews',
+        error: 500,
+        errorCause: e,
+      },
+      500,
+    );
+
+  static optionLimitException = (e: any): HttpException =>
+    new HttpException(
+      {
+        status: 500,
+        message: 'this interview cannot have more options',
+        error: 501,
+        errorCause: e,
+      },
+      500,
+    );
+
+  static expertLimitException = (e: any): HttpException =>
+    new HttpException(
+      {
+        status: 500,
+        message: 'this interview cannot have more experts',
+        error: 502,
+        errorCause: e,
+      },
+      500,
+    );
 }

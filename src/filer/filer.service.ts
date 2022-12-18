@@ -1,12 +1,9 @@
-import {
-  HttpException,
-  Injectable,
-  InternalServerErrorException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { AxiosError } from 'axios';
 import * as FormData from 'form-data';
 import { catchError, firstValueFrom } from 'rxjs';
+import { AppException } from 'src/common/exceptions/exceptions';
 
 @Injectable()
 export class FilerService {
@@ -19,7 +16,7 @@ export class FilerService {
     const { data } = await firstValueFrom(
       this.httpService.post<string>(process.env.FILE_SERVER_URL, formData).pipe(
         catchError((error: AxiosError) => {
-          throw new HttpException(error.response.data, error.response.status);
+          throw AppException.fileServerException(error);
         }),
       ),
     );
@@ -33,7 +30,7 @@ export class FilerService {
         .delete<string>(process.env.FILE_SERVER_URL + '/' + imageName)
         .pipe(
           catchError((error: AxiosError) => {
-            throw new HttpException(error.response.data, error.response.status);
+            throw AppException.fileServerException(error);
           }),
         ),
     );
@@ -52,8 +49,7 @@ export class FilerService {
         .put<string>(process.env.FILE_SERVER_URL + '/' + imageName, formData)
         .pipe(
           catchError((error: AxiosError) => {
-            console.log(error);
-            throw new InternalServerErrorException(error.message);
+            throw AppException.fileServerException(error);
           }),
         ),
     );

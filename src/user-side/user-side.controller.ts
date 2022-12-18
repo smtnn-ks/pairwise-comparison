@@ -12,9 +12,10 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { Option, Interview, Prisma, Expert } from '@prisma/client';
+import { Option, Interview, Expert } from '@prisma/client';
 import { UserId } from 'src/common/decorators/user-id.decorator';
 import { IsActivated } from 'src/common/guards/is-activated.guard';
+import { ExpertDto, InterviewDto, OptionDto } from './dto';
 import { UserSideService } from './user-side.service';
 
 @Controller('interviews')
@@ -25,7 +26,7 @@ export class UserSideController {
   @UseGuards(AuthGuard('jwt'), IsActivated)
   @UseInterceptors(FileInterceptor('image'))
   async create(
-    @Body() interviewDto: Prisma.InterviewCreateInput,
+    @Body() interviewDto: InterviewDto,
     @UploadedFile() image: Express.Multer.File,
     @UserId() userId: number,
   ): Promise<Interview> {
@@ -51,7 +52,7 @@ export class UserSideController {
   @UseGuards(AuthGuard('jwt'))
   @UseInterceptors(FileInterceptor('image'))
   async update(
-    @Body() interviewDto: Prisma.InterviewUpdateInput,
+    @Body() interviewDto: InterviewDto,
     @UploadedFile() image: Express.Multer.File,
     @Param('id') interviewId: string,
     @UserId() userId: number,
@@ -77,7 +78,7 @@ export class UserSideController {
   @UseGuards(AuthGuard('jwt'))
   @UseInterceptors(FileInterceptor('image'))
   async createOption(
-    @Body() optionDto: Prisma.OptionCreateInput,
+    @Body() optionDto: OptionDto,
     @UploadedFile() image: Express.Multer.File,
     @Param('id') interviewId: string,
     @UserId() userId: number,
@@ -94,7 +95,7 @@ export class UserSideController {
   @UseGuards(AuthGuard('jwt'))
   @UseInterceptors(FileInterceptor('image'))
   async updateOption(
-    @Body() optionDto: Prisma.OptionUpdateInput,
+    @Body() optionDto: OptionDto,
     @UploadedFile() image: Express.Multer.File,
     @Param('optionId') optionId: string,
     @Param('interviewId') interviewId: string,
@@ -126,7 +127,7 @@ export class UserSideController {
   @Post(':interviewId/experts')
   @UseGuards(AuthGuard('jwt'))
   async createExpert(
-    @Body() expertDto: Prisma.ExpertCreateInput,
+    @Body() expertDto: ExpertDto,
     @Param('interviewId') interviewId: string,
     @UserId() userId: number,
   ): Promise<Expert> {
@@ -140,7 +141,7 @@ export class UserSideController {
   @Put(':interviewId/experts/:expertId')
   @UseGuards(AuthGuard('jwt'))
   async updateExpert(
-    @Body() expertDto: Prisma.ExpertUpdateInput,
+    @Body() expertDto: ExpertDto,
     @Param('expertId') expertId: string,
     @Param('interviewId') interviewId: string,
     @UserId() userId: number,
