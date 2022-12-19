@@ -26,6 +26,14 @@ To run this project, install it locally using npm:
 
 ```
 $ npm install
+```
+Migrate database with prisma
+```
+npx prisma migrate deploy
+```
+
+Start the project
+```
 $ npm start
 ```
 
