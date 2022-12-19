@@ -29,7 +29,7 @@ $ npm install
 ```
 Migrate database with prisma
 ```
-npx prisma migrate deploy
+$ npx prisma migrate deploy
 ```
 
 Start the project
