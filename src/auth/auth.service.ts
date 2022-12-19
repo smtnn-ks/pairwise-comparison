@@ -66,19 +66,20 @@ export class AuthService {
   }
 
   async logout(id: number): Promise<UserResponseDto> {
-    if (!id) throw AppException.invalidTokenException();
     const user = await this.prisma.user.update({
       where: { id },
       data: { refreshToken: '' },
       select: { id: true, email: true, isActivated: true },
     });
-    if (!user) throw AppException.invalidTokenException();
+    if (!user) throw AppException.tokenRefersToNonExistingUserExcetption();
     return user;
   }
 
   async refresh(id: number, refreshToken: string): Promise<Tokens> {
     const user = await this.prisma.user.findUnique({ where: { id } });
-    if (!user || !user.refreshToken) throw AppException.invalidTokenException();
+    if (!user) throw AppException.tokenRefersToNonExistingUserExcetption();
+    if (!user.refreshToken)
+      throw AppException.refreshTokenDoesNotMatchException();
     const verifyRefreshToken = this.compareData(
       refreshToken,
       user.refreshToken,
@@ -113,7 +114,7 @@ export class AuthService {
 
   async restorePass(id: number, password: string): Promise<UserResponseDto> {
     const user = await this.prisma.user.findUnique({ where: { id } });
-    if (!user) throw AppException.invalidTokenException();
+    if (!user) throw AppException.tokenRefersToNonExistingUserExcetption();
 
     const hashPassword = this.hashData(password);
 

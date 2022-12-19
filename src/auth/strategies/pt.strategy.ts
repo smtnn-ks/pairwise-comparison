@@ -6,7 +6,7 @@ import { Injectable } from '@nestjs/common';
 export class PtStrategy extends PassportStrategy(Strategy, 'jwt-restore') {
   constructor() {
     super({
-      jwtFromRequest: ExtractJwt.fromBodyField('token'),
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
       secretOrKey: process.env.PT_SECRET,
     });

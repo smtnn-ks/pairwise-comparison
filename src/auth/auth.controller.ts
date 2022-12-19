@@ -17,7 +17,6 @@ import {
 } from './dto';
 import { Tokens } from './types';
 import { Request } from 'express';
-import { Payload } from 'src/common/decorators/payload.decorator';
 import { UserId } from 'src/common/decorators/user-id.decorator';
 
 @Controller('auth')
@@ -43,8 +42,8 @@ export class AuthController {
 
   @Post('logout')
   @UseGuards(AuthGuard('jwt'))
-  async logout(@Payload() payload: any): Promise<UserResponseDto> {
-    return await this.authService.logout(payload.sub);
+  async logout(@UserId() userId: number): Promise<UserResponseDto> {
+    return await this.authService.logout(userId);
   }
 
   @Post('refresh')
